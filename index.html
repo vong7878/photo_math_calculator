@@ -59,11 +59,33 @@
     </div>
   </header>
 
+  <!-- Blur / Focus Guard Overlay -->
+  <div id="focusBlurOverlay" class="fixed inset-0 z-30 hidden bg-slate-900/45 backdrop-blur-md flex items-center justify-center p-4 select-none">
+    <div class="bg-white rounded-2xl border border-amber-300 max-w-md w-full p-6 text-center shadow-xl space-y-3">
+      <div class="text-base font-bold text-amber-900">ກະລຸນາກັບມາທີ່ໜ້າເຮັດວຽກບ້ານ</div>
+      <p class="text-xs sm:text-sm text-slate-600 leading-relaxed">
+        ລະບົບກວດພົບວ່າທ່ານອອກຈາກໜ້າຕ່າງເຮັດວຽກບ້ານ (ເຊັ່ນ ສະຫຼັບແທັບ ຫຼື ຄລິກ Sidebar / ແອັບອື່ນ). ລະບົບໄດ້ບັນທຶກເວລາທີ່ອອກໄປແລ້ວ.
+      </p>
+      <button
+        type="button"
+        onclick="dismissFocusBlurOverlay()"
+        class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold transition cursor-pointer"
+      >
+        ກັບມາເຮັດວຽກບ້ານຕໍ່
+      </button>
+    </div>
+  </div>
+
+  <!-- Watermark Overlay (Student Name / Class / Timestamp) -->
+  <div id="watermarkOverlay" class="pointer-events-none fixed inset-0 z-20 hidden overflow-hidden select-none opacity-[0.09]">
+    <div id="watermarkGrid" class="w-full h-full grid grid-cols-2 sm:grid-cols-3 gap-10 p-6 -rotate-12 scale-125"></div>
+  </div>
+
   <!-- Main Workspace -->
   <main id="mainWorkspace" class="max-w-6xl w-full mx-auto px-4 py-6 sm:py-8 flex-1">
 
     <!-- ==================== STUDENT QUIZ VIEW ==================== -->
-    <section id="studentView" class="space-y-6">
+    <section id="studentView" class="space-y-6 select-none">
 
       <!-- Anti-Cheat Warning Banner -->
       <div id="antiCheatAlertBox" class="hidden rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs sm:text-sm text-amber-900 flex flex-wrap items-center justify-between gap-2">
@@ -71,7 +93,7 @@
           <strong>ແຈ້ງເຕືອນລະບົບກວດສອບ:</strong> ກວດພົບການສະຫຼັບແທັບ ຫຼື ອອກຈາກໜ້າຕ່າງເຮັດວຽກບ້ານ
         </span>
         <span class="font-bold px-2.5 py-0.5 rounded-full bg-amber-200/80 text-amber-950">
-          ອອກຈາກໜ້າຈໍ: <span id="tabSwitchCountDisplay">0</span> ຄັ້ງ
+          ອອກຈາກໜ້າຈໍ: <span id="tabSwitchCountDisplay">0</span> ຄັ້ງ (<span id="awaySecondsDisplay">0s</span>)
         </span>
       </div>
 
@@ -526,13 +548,53 @@
     let countdownTimerId = null;
     let quizSubmitted = false;
     let tabSwitchCount = 0;
+    let awaySeconds = 0;
+    let awayStartTimestamp = null;
+    let awayTickerId = null;
     let lastLeaveTimestamp = 0;
     let activeSessionQuestions = buildShuffledSessionQuestions();
     let submissionsList = loadCachedSubmissions();
 
+    function updateAwayDisplay() {
+      const awayEl = document.getElementById('awaySecondsDisplay');
+      if (awayEl) awayEl.textContent = `${awaySeconds}s`;
+    }
+
+    function beginAwayTimer() {
+      if (awayStartTimestamp !== null) return;
+      awayStartTimestamp = Date.now();
+      clearInterval(awayTickerId);
+      awayTickerId = setInterval(() => {
+        if (awayStartTimestamp !== null) {
+          const liveAway = awaySeconds + Math.floor((Date.now() - awayStartTimestamp) / 1000);
+          const awayEl = document.getElementById('awaySecondsDisplay');
+          if (awayEl) awayEl.textContent = `${liveAway}s`;
+        }
+      }, 500);
+    }
+
+    function endAwayTimer() {
+      clearInterval(awayTickerId);
+      awayTickerId = null;
+      if (awayStartTimestamp !== null) {
+        const elapsed = Math.max(0, Math.round((Date.now() - awayStartTimestamp) / 1000));
+        awaySeconds += elapsed;
+        awayStartTimestamp = null;
+        updateAwayDisplay();
+      }
+    }
+
+    function dismissFocusBlurOverlay() {
+      endAwayTimer();
+      document.getElementById('focusBlurOverlay')?.classList.add('hidden');
+    }
+
     function recordTabSwitchWarning() {
       const studentViewVisible = !document.getElementById('studentView')?.classList.contains('hidden');
       if (!studentViewVisible || quizSubmitted) return;
+
+      beginAwayTimer();
+      document.getElementById('focusBlurOverlay')?.classList.remove('hidden');
 
       const now = Date.now();
       if (now - lastLeaveTimestamp < 350) return;
@@ -542,16 +604,25 @@
       const alertBox = document.getElementById('antiCheatAlertBox');
       const countEl = document.getElementById('tabSwitchCountDisplay');
       if (countEl) countEl.textContent = String(tabSwitchCount);
+      updateAwayDisplay();
       if (alertBox) alertBox.classList.remove('hidden');
       showToast(`ແຈ້ງເຕືອນ: ກວດພົບການອອກຈາກໜ້າຈໍ (${tabSwitchCount} ຄັ້ງ)`, 'warn');
     }
 
     document.addEventListener('visibilitychange', () => {
-      if (document.hidden) recordTabSwitchWarning();
+      if (document.hidden) {
+        recordTabSwitchWarning();
+      } else {
+        endAwayTimer();
+      }
     });
 
     window.addEventListener('blur', () => {
       recordTabSwitchWarning();
+    });
+
+    window.addEventListener('focus', () => {
+      endAwayTimer();
     });
 
     function loadCachedSubmissions() {
@@ -601,37 +672,53 @@
     function renderQuestions() {
       const container = document.getElementById('questionsContainer');
       if (!container) return;
+
+      if (!Array.isArray(activeSessionQuestions) || activeSessionQuestions.length === 0) {
+        activeSessionQuestions = buildShuffledSessionQuestions();
+      }
+
       container.innerHTML = '';
 
       activeSessionQuestions.forEach((q, idx) => {
         const card = document.createElement('div');
-        card.className = 'bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs';
+        card.className = 'bg-white rounded-2xl border border-slate-200 p-5 shadow-xs';
 
-        const optionsMarkup = CHOICE_KEYS.map((choiceKey) => {
-          const choiceText = q.displayOptions[choiceKey];
-          return `
-            <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 cursor-pointer transition">
-              <input
-                type="radio"
-                name="question_${q.id}"
-                value="${choiceKey}"
-                onchange="updateAnsweredCounter()"
-                class="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
-              />
-              <span class="font-bold text-indigo-700">${choiceKey}.</span>
-              <span class="text-sm text-slate-800">${escapeHtml(choiceText)}</span>
-            </label>
-          `;
-        }).join('');
+        const titleEl = document.createElement('div');
+        titleEl.className = 'font-bold text-slate-900 text-sm sm:text-base mb-3.5';
+        titleEl.textContent = `${idx + 1}. ${q.question}`;
+        card.appendChild(titleEl);
 
-        card.innerHTML = `
-          <div class="font-bold text-slate-900 text-sm sm:text-base mb-3.5">
-            ${idx + 1}. ${escapeHtml(q.question)}
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-            ${optionsMarkup}
-          </div>
-        `;
+        const gridEl = document.createElement('div');
+        gridEl.className = 'grid grid-cols-1 sm:grid-cols-2 gap-2.5';
+
+        CHOICE_KEYS.forEach((choiceKey) => {
+          const choiceText = (q.displayOptions && q.displayOptions[choiceKey]) || (q.options && q.options[choiceKey]) || '';
+
+          const labelEl = document.createElement('label');
+          labelEl.className = 'flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 cursor-pointer transition';
+
+          const radioEl = document.createElement('input');
+          radioEl.type = 'radio';
+          radioEl.name = `question_${q.id}`;
+          radioEl.value = choiceKey;
+          radioEl.className = 'w-4 h-4 text-indigo-600 focus:ring-indigo-500';
+          radioEl.addEventListener('change', updateAnsweredCounter);
+
+          const keySpan = document.createElement('span');
+          keySpan.className = 'font-bold text-indigo-700';
+          keySpan.textContent = `${choiceKey}.`;
+
+          const textSpan = document.createElement('span');
+          textSpan.className = 'text-sm text-slate-800';
+          textSpan.textContent = choiceText;
+
+          labelEl.appendChild(radioEl);
+          labelEl.appendChild(keySpan);
+          labelEl.appendChild(textSpan);
+          gridEl.appendChild(labelEl);
+        });
+
+        card.appendChild(gridEl);
         container.appendChild(card);
       });
 
@@ -836,7 +923,9 @@
 
       const total = QUESTIONS.length;
       const percent = Math.round((score / total) * 100);
+      endAwayTimer();
       const recordedTabSwitches = Number(tabSwitchCount || 0);
+      const recordedAwaySeconds = Number(awaySeconds || 0);
       const record = {
         id: String(Date.now()),
         studentName,
@@ -848,6 +937,7 @@
         correctCount: score,
         wrongCount: total - score,
         tabSwitchCount: recordedTabSwitches,
+        awaySeconds: recordedAwaySeconds,
         submitType,
         submittedAt: new Date().toLocaleString('lo-LA')
       };
@@ -943,7 +1033,12 @@
     function resetStudentQuiz() {
       quizSubmitted = false;
       tabSwitchCount = 0;
+      awaySeconds = 0;
+      awayStartTimestamp = null;
+      clearInterval(awayTickerId);
       lastLeaveTimestamp = 0;
+      document.getElementById('focusBlurOverlay')?.classList.add('hidden');
+      updateAwayDisplay();
       remainingSeconds = quizDurationMinutes * 60;
       activeSessionQuestions = buildShuffledSessionQuestions();
 
@@ -1267,8 +1362,57 @@
       showToast('ດາວໂຫຼດໄຟລ໌ CSV ສຳເລັດ');
     }
 
+    // ==================== WATERMARK & COPY GUARD ====================
+    function updateStudentWatermark() {
+      const overlay = document.getElementById('watermarkOverlay');
+      const grid = document.getElementById('watermarkGrid');
+      const studentViewVisible = !document.getElementById('studentView')?.classList.contains('hidden');
+      if (!overlay || !grid) return;
+
+      if (!studentViewVisible || quizSubmitted) {
+        overlay.classList.add('hidden');
+        return;
+      }
+
+      const nameVal = (document.getElementById('studentNameInput')?.value || '').trim();
+      const classVal = (document.getElementById('studentClassInput')?.value || '').trim();
+      const label = nameVal
+        ? `${nameVal}${classVal ? ` (${classVal})` : ''} • ມ.2`
+        : `ນັກຮຽນ ມ.2${classVal ? ` (${classVal})` : ''}`;
+
+      const tilesCount = 12;
+      grid.innerHTML = Array.from({ length: tilesCount })
+        .map(
+          () => `<div class="flex items-center justify-center text-center text-sm sm:text-base font-bold text-slate-900 break-words leading-snug">${escapeHtml(label)}</div>`
+        )
+        .join('');
+
+      overlay.classList.remove('hidden');
+    }
+
+    document.addEventListener('input', (e) => {
+      if (e.target && (e.target.id === 'studentNameInput' || e.target.id === 'studentClassInput')) {
+        updateStudentWatermark();
+      }
+    });
+
+    document.addEventListener('contextmenu', (e) => {
+      const studentViewVisible = !document.getElementById('studentView')?.classList.contains('hidden');
+      if (studentViewVisible && !quizSubmitted) {
+        e.preventDefault();
+      }
+    });
+
+    document.addEventListener('copy', (e) => {
+      const studentViewVisible = !document.getElementById('studentView')?.classList.contains('hidden');
+      if (studentViewVisible && !quizSubmitted) {
+        e.preventDefault();
+        showToast('ບໍ່ອະນຸຍາດໃຫ້ກ່າຍຂໍ້ຄວາມຄຳຖາມ', 'warn');
+      }
+    });
+
     // ==================== INITIALIZE APPLICATION ====================
-    (function initApplication() {
+    function initApplication() {
       try {
         updateAdminCountBadge();
         updateDurationStatusText();
@@ -1285,7 +1429,13 @@
           `;
         }
       }
-    })();
+    }
+
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', initApplication);
+    } else {
+      initApplication();
+    }
   </script>
 </body>
 </html>
