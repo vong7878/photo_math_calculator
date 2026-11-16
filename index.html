@@ -4,1650 +4,288 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ວຽກບ້ານຄະນິດສາດ ມ.2 - ລະບົບບັນທຶກຄະແນນ</title>
-  <!-- Load Noto Sans Lao + Inter via Google Fonts -->
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Lao:wght@400;500;600;700&display=swap" rel="stylesheet" />
-  <!-- Load Tailwind CSS CDN -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-    tailwind.config = {
-      theme: {
-        extend: {
-          fontFamily: {
-            sans: ['"Noto Sans Lao"', 'Inter', 'system-ui', 'sans-serif'],
-          }
-        }
-      }
-    };
-  </script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+Lao:wght@400;500;600;700&display=swap" rel="stylesheet">
   <style>
     body {
-      font-family: 'Noto Sans Lao', 'Inter', system-ui, sans-serif;
-      background-color: #f8fafc;
-      color: #0f172a;
-      overflow-x: hidden;
-    }
-    .math-frac {
-      display: inline-flex;
-      flex-direction: column;
-      align-items: center;
-      vertical-align: middle;
-      line-height: 1.1;
-      margin: 0 2px;
-      font-size: 0.92em;
-    }
-    .math-frac-num {
-      border-bottom: 1.5px solid currentColor;
-      padding: 0 4px 1px 4px;
-    }
-    .math-frac-den {
-      padding: 1px 4px 0 4px;
-    }
-    @keyframes pulseWarning {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.03); }
-    }
-    .timer-urgent {
-      animation: pulseWarning 1s infinite;
+      font-family: 'Noto Sans Lao', sans-serif;
     }
   </style>
 </head>
-<body class="min-h-screen flex flex-col bg-slate-50 text-slate-900">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-  <!-- Toast Notification Container -->
-  <div id="toastContainer" class="fixed top-4 right-4 z-50 flex flex-col gap-2 max-w-sm w-full px-4 sm:px-0 pointer-events-none"></div>
+  <!-- Toast Notification -->
+  <div id="toast" class="fixed top-4 right-4 z-50 hidden max-w-sm rounded-xl px-4 py-3 text-sm font-medium text-white shadow-lg transition-all duration-300"></div>
 
-  <!-- Custom Confirm / Alert Modal (replaces alert/confirm) -->
-  <div id="customModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-md w-full p-6">
-      <div class="flex items-start gap-3">
-        <div id="customModalIcon" class="w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-indigo-100 text-indigo-600">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01M10.29 3.86L1.82 18a2 2 0 001.71 3h16.94a2 2 0 001.71-3L13.71 3.86a2 2 0 00-3.42 0z"/>
-          </svg>
+  <!-- Top Header -->
+  <header class="bg-white border-b border-slate-200 sticky top-0 z-30 shadow-xs">
+    <div class="max-w-6xl mx-auto px-4 py-3.5 flex flex-wrap items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-indigo-600 text-white flex items-center justify-center font-bold text-lg shadow-sm">
+          ມ.2
         </div>
-        <div class="flex-1">
-          <h3 id="customModalTitle" class="text-lg font-bold text-slate-900">ຢືນຢັນການດຳເນີນການ</h3>
-          <p id="customModalMessage" class="mt-1.5 text-sm text-slate-600 leading-relaxed"></p>
-        </div>
-      </div>
-      <div id="customModalActions" class="mt-6 flex items-center justify-end gap-3"></div>
-    </div>
-  </div>
-
-  <!-- Admin PIN Modal (Requires PIN 99922246 when switching to Admin tab) -->
-  <div id="adminPinModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/65 p-4">
-    <div class="bg-white rounded-3xl shadow-2xl border border-slate-200 max-w-md w-full p-6 sm:p-7">
-      <div class="flex items-center justify-between mb-4">
-        <div class="w-11 h-11 rounded-2xl bg-indigo-100 text-indigo-700 flex items-center justify-center">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"/>
-          </svg>
-        </div>
-        <button type="button" onclick="cancelPinModal()" class="p-2 rounded-xl text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition cursor-pointer" aria-label="ປິດ">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-
-      <h2 class="text-xl font-bold text-slate-900">ປ້ອນລະຫັດຜ່ານແອັດມິນ</h2>
-      <p class="text-sm text-slate-600 mt-1">
-        ກະລຸນາປ້ອນລະຫັດຜ່ານເພື່ອເຂົ້າເບິ່ງໜ້າແອັດມິນ ແລະ ລາຍຊື່ຄະແນນນັກຮຽນ.
-      </p>
-
-      <form onsubmit="submitAdminPinModal(event)" class="mt-5 space-y-4">
         <div>
-          <label for="adminModalPinInput" class="block text-sm font-semibold text-slate-700 mb-1.5">ລະຫັດຜ່ານ</label>
-          <input
-            type="password"
-            id="adminModalPinInput"
-            inputmode="numeric"
-            autocomplete="off"
-            placeholder="ປ້ອນລະຫັດຜ່ານແອັດມິນ"
-            class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none text-slate-900"
-          />
-          <p id="adminModalPinError" class="hidden text-xs text-rose-600 mt-1.5 font-semibold">
-            ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ ກະລຸນາລອງໃໝ່
+          <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">
+            ວຽກບ້ານຄະນິດສາດ ຊັ້ນ ມ.2
+          </h1>
+          <p class="text-xs text-slate-500">
+            ແບບຝຶກຫັດປາລະໄນ 10 ຂໍ້ • ຄຳນວນຄະແນນ ແລະ ບັນທຶກຜ່ານ Google Apps Script
           </p>
         </div>
-
-        <div class="flex items-center justify-end gap-3 pt-1">
-          <button
-            type="button"
-            onclick="cancelPinModal()"
-            class="px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition cursor-pointer"
-          >
-            ຍົກເລີກ
-          </button>
-          <button
-            type="submit"
-            class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-sm transition cursor-pointer"
-          >
-            ຢືນຢັນລະຫັດ
-          </button>
-        </div>
-      </form>
-    </div>
-  </div>
-
-  <!-- Submission Detail Modal (for Admin) -->
-  <div id="detailModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-slate-900/60 p-4">
-    <div class="bg-white rounded-2xl shadow-2xl border border-slate-200 max-w-3xl w-full max-h-[90vh] flex flex-col overflow-hidden">
-      <div class="px-6 py-4 bg-gradient-to-r from-indigo-700 to-blue-700 text-white flex items-center justify-between">
-        <div>
-          <h3 class="text-lg font-bold">ລາຍລະອຽດໃບຕອບຂອງນັກຮຽນ</h3>
-          <p id="detailSubheader" class="text-xs text-indigo-100 mt-0.5"></p>
-        </div>
-        <button type="button" onclick="closeDetailModal()" class="p-2 rounded-xl hover:bg-white/15 transition cursor-pointer">
-          <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-          </svg>
-        </button>
-      </div>
-      <div id="detailModalBody" class="p-6 overflow-y-auto space-y-4 flex-1 bg-slate-50/60"></div>
-      <div class="px-6 py-3.5 bg-white border-t border-slate-200 flex justify-end">
-        <button type="button" onclick="closeDetailModal()" class="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-900 text-white font-semibold text-sm transition cursor-pointer">
-          ປິດໜ້າຕ່າງ
-        </button>
-      </div>
-    </div>
-  </div>
-
-  <!-- Top Navigation Header -->
-  <header class="sticky top-0 z-30 bg-white/95 backdrop-blur border-b border-slate-200 shadow-2xs">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2.5 flex flex-wrap items-center justify-between gap-3">
-      <!-- Brand / Title -->
-      <div class="flex items-center gap-3 min-w-0">
-        <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-indigo-600 via-blue-600 to-cyan-500 flex items-center justify-center text-white shadow-sm shrink-0">
-          <svg class="w-6 h-6" fill="none" stroke="currentColor" stroke-width="2.2" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M4.745 3A23.933 23.933 0 003 12c0 3.183.62 6.22 1.745 9M19.5 3c.967 2.78 1.5 5.817 1.5 9s-.533 6.22-1.5 9M8.25 8.885l1.444-.89a.75.75 0 011.105.402l2.402 7.206a.75.75 0 001.104.401l1.445-.889m-8.25.75l.213.09a1.687 1.687 0 002.062-.617l4.45-6.676a1.688 1.688 0 012.062-.616l.213.09"/>
-          </svg>
-        </div>
-        <div class="min-w-0">
-          <div class="flex items-center gap-2 flex-wrap">
-            <h1 class="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-              ວຽກບ້ານຄະນິດສາດ ມ.2 - ລະບົບບັນທຶກຄະແນນ
-            </h1>
-            <span id="quizStatusBadge" class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800">
-              <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
-              <span>ກຳລັງເປີດໃຫ້ສົ່ງ</span>
-            </span>
-          </div>
-          <p class="text-xs text-slate-500">ແບບຝຶກຫັດປາລະໄນ 10 ຂໍ້ • ຄຳນວນຄະແນນ ແລະ ບັນທຶກຜົນອັດຕະໂນມັດ</p>
-        </div>
       </div>
 
-      <!-- 2 Mode Switcher Tabs -->
-      <nav class="flex items-center bg-slate-100 p-1 rounded-2xl border border-slate-200/80 shrink-0" aria-label="ໂໝດການໃຊ້ງານ">
+      <!-- Mode Switcher -->
+      <div class="flex items-center bg-slate-100 p-1 rounded-xl border border-slate-200">
         <button
           id="tabStudent"
           type="button"
-          onclick="switchMode('student')"
-          class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer bg-indigo-600 text-white shadow-xs"
+          onclick="switchToStudent()"
+          class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 bg-indigo-600 text-white shadow-xs"
         >
+          <span>🎓</span>
           <span>ໜ້ານັກຮຽນ</span>
         </button>
         <button
           id="tabAdmin"
           type="button"
-          onclick="switchMode('admin')"
-          class="flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer text-slate-600 hover:text-slate-900"
+          onclick="requestAdminAccess()"
+          class="px-3.5 py-2 rounded-lg text-xs sm:text-sm font-semibold transition flex items-center gap-1.5 text-slate-600 hover:text-slate-900"
         >
+          <span>🛡️</span>
           <span>ໜ້າແອັດມິນ</span>
-          <span id="adminCountPill" class="px-2 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-700">0</span>
+          <span id="adminCountBadge" class="ml-0.5 px-1.5 py-0.5 text-[11px] rounded-full bg-indigo-100 text-indigo-700 font-bold">0</span>
         </button>
-      </nav>
+      </div>
     </div>
   </header>
 
-  <!-- Main Content Area -->
-  <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8">
+  <!-- Main Container -->
+  <main id="appRoot" class="max-w-6xl w-full mx-auto px-4 py-6 flex-1">
 
-    <!-- ==================== STUDENT MODE ==================== -->
+    <!-- ==================== STUDENT VIEW ==================== -->
     <section id="studentView" class="space-y-6">
 
-      <!-- Step 1: Student Name & Class Form -->
-      <div id="studentStartCard" class="max-w-2xl mx-auto bg-white rounded-3xl shadow-xs border border-slate-200/90 overflow-hidden">
-        <div class="bg-gradient-to-r from-indigo-600 via-blue-600 to-indigo-700 p-6 sm:p-8 text-white">
-          <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-white/15 text-xs font-medium mb-3">
-            <span>ຊັ້ນມັດທະຍົມສຶກສາປີທີ 2 (ມ.2)</span>
-            <span>•</span>
-            <span>ວິຊາຄະນິດສາດ</span>
+      <!-- Timer & Status Banner -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-2 text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700 mb-1.5">
+            <span>⏱️</span>
+            <span>ເວລາເຮັດວຽກບ້ານຕາມທີ່ແອັດມິນກຳນົດ</span>
           </div>
-          <h2 class="text-2xl sm:text-3xl font-bold">ຍິນດີຕ້ອນຮັບສູ່ການເຮັດວຽກບ້ານ</h2>
-          <p class="mt-2 text-indigo-100 text-sm sm:text-base leading-relaxed">
-            ປ້ອນຊື່ ແລະ ຫ້ອງ ແລ້ວກົດເລີ່ມເຮັດວຽກບ້ານ. ລະບົບຈະຈັບເວລາຕາມທີ່ແອັດມິນກຳນົດ ແລະ ຄິດໄລ່ຄະແນນອັດຕະໂນມັດຫຼັງຈາກສົ່ງ.
+          <p class="text-sm text-slate-600">
+            ກະລຸນາປ້ອນຂໍ້ມູນ ແລະ ເລືອກຄຳຕອບໃຫ້ຄົບທັງ 10 ຂໍ້. ເມື່ອໝົດເວລາ ລະບົບຈະສົ່ງຄຳຕອບອັດຕະໂນມັດ.
           </p>
         </div>
 
-        <div class="p-6 sm:p-8 space-y-5">
-          <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
-              <div class="text-xs text-slate-500">ຈຳນວນຄຳຖາມ</div>
-              <div id="startQuestionCount" class="text-lg font-bold text-slate-900 mt-0.5">10 ຂໍ້ (10 ຄະແນນ)</div>
-            </div>
-            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
-              <div class="text-xs text-slate-500">ເວລາທີ່ກຳນົດ</div>
-              <div id="startTimeLimitDisplay" class="text-lg font-bold text-indigo-600 mt-0.5">10 ນາທີ</div>
-            </div>
-            <div class="p-3.5 rounded-2xl bg-slate-50 border border-slate-200/70">
-              <div class="text-xs text-slate-500">ສະຖານະລະບົບ</div>
-              <div id="startQuizStatusText" class="text-lg font-bold text-emerald-600 mt-0.5">ເປີດໃຫ້ສົ່ງ</div>
-            </div>
-          </div>
-
-          <div id="quizClosedBanner" class="hidden p-4 rounded-2xl bg-rose-50 border border-rose-200 text-rose-800 text-sm font-medium">
-            ຂະນະນີ້ລະບົບສົ່ງວຽກບ້ານຖືກປິດຊົ່ວຄາວ ກະລຸນາລໍຖ້າ ຫຼື ຕິດຕໍ່ແອັດມິນ.
-          </div>
-
-          <form id="studentStartForm" onsubmit="startQuiz(event)" class="space-y-4">
-            <div>
-              <label for="studentName" class="block text-sm font-semibold text-slate-700 mb-1.5">
-                ຊື່ ແລະ ນາມສະກຸນ <span class="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="studentName"
-                required
-                placeholder="ຕົວຢ່າງ: ທ້າວ ສົມຊາຍ ໃຈດີ"
-                class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition text-slate-900 bg-white"
-              />
-            </div>
-            <div>
-              <label for="studentClassId" class="block text-sm font-semibold text-slate-700 mb-1.5">
-                ຫ້ອງຮຽນ <span class="text-rose-500">*</span>
-              </label>
-              <input
-                type="text"
-                id="studentClassId"
-                required
-                placeholder="ຕົວຢ່າງ: ມ.2/1"
-                class="w-full px-4 py-3 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none transition text-slate-900 bg-white"
-              />
-            </div>
-
-            <button
-              type="submit"
-              id="btnStartQuiz"
-              class="w-full py-3.5 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-700 active:bg-indigo-800 disabled:bg-slate-300 disabled:cursor-not-allowed text-white font-bold text-base shadow-sm transition flex items-center justify-center gap-2 cursor-pointer"
-            >
-              <span>ເລີ່ມເຮັດວຽກບ້ານ</span>
-            </button>
-          </form>
-        </div>
-      </div>
-
-      <!-- Step 2: Active Quiz View -->
-      <div id="studentQuizActive" class="hidden space-y-6">
-        <div class="sticky top-20 z-20 bg-white/95 backdrop-blur rounded-2xl border border-slate-200 shadow-md p-4 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div class="min-w-0">
-            <div id="activeStudentLabel" class="font-bold text-slate-900 truncate"></div>
-            <div class="flex items-center gap-2 mt-1">
-              <div class="w-36 sm:w-48 h-2 bg-slate-200 rounded-full overflow-hidden">
-                <div id="quizProgressBar" class="h-full bg-indigo-600 transition-all duration-300" style="width: 0%"></div>
-              </div>
-              <span id="quizProgressText" class="text-xs font-semibold text-slate-600">ຕອບແລ້ວ 0/10 ຂໍ້</span>
-            </div>
-          </div>
-
-          <div id="timerBox" class="flex items-center justify-between sm:justify-end gap-3 px-4 py-2.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 shrink-0">
-            <span class="text-xs sm:text-sm font-semibold">ເວລາທີ່ເຫຼືອ:</span>
-            <span id="timerDisplay" class="font-mono text-xl sm:text-2xl font-extrabold tracking-tight">10:00</span>
-          </div>
-        </div>
-
-        <div id="questionsList" class="space-y-5"></div>
-
-        <div class="bg-white rounded-2xl border border-slate-200 p-6 flex flex-col sm:flex-row items-center justify-between gap-4 shadow-2xs">
-          <div>
-            <h3 class="font-bold text-slate-900">ພ້ອມສົ່ງຄຳຕອບແລ້ວບໍ່?</h3>
-            <p id="unansweredWarning" class="text-sm text-slate-500 mt-0.5">ກວດສອບຄຳຕອບໃຫ້ຄົບຖ້ວນກ່ອນກົດປຸ່ມສົ່ງຄຳຕອບ.</p>
+        <div class="flex items-center gap-3 shrink-0">
+          <div id="timerBox" class="bg-indigo-50 border border-indigo-200 rounded-2xl px-4 py-2.5 text-center min-w-[140px]">
+            <div class="text-[11px] font-medium text-indigo-600">ເວລາທີ່ເຫຼືອ</div>
+            <div id="timerDisplay" class="text-2xl font-bold text-indigo-700 tabular-nums">10:00</div>
           </div>
           <button
+            id="restartQuizBtn"
             type="button"
-            onclick="confirmAndSubmitQuiz(false)"
-            class="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 active:bg-emerald-800 text-white font-bold text-base shadow-sm transition cursor-pointer"
+            onclick="resetStudentQuiz()"
+            class="hidden px-3.5 py-2.5 rounded-xl border border-slate-300 text-xs sm:text-sm font-semibold text-slate-700 hover:bg-slate-100 transition"
           >
-            ສົ່ງຄຳຕອບ
+            ເຮັດໃໝ່
           </button>
         </div>
       </div>
 
-      <!-- Step 3: Student Result Breakdown View -->
-      <div id="studentResultView" class="hidden space-y-6">
-        <div class="bg-white rounded-3xl border border-slate-200 shadow-xs overflow-hidden">
-          <div id="resultBanner" class="bg-gradient-to-r from-emerald-600 to-teal-600 p-6 sm:p-8 text-white">
-            <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
-              <div>
-                <span class="inline-block px-3 py-1 rounded-full bg-white/20 text-xs font-semibold mb-2">
-                  ຜົນການເຮັດວຽກບ້ານສຳເລັດແລ້ວ
-                </span>
-                <h2 id="resultStudentTitle" class="text-2xl sm:text-3xl font-bold"></h2>
-                <p id="resultStudentMeta" class="text-emerald-50 text-sm mt-1"></p>
-              </div>
-              <div class="bg-white/15 rounded-2xl px-6 py-4 text-center shrink-0 border border-white/25">
-                <div class="text-xs uppercase tracking-wider text-emerald-100 font-semibold">ຄະແນນທີ່ໄດ້</div>
-                <div id="resultScoreBig" class="text-4xl sm:text-5xl font-extrabold mt-1">0/10</div>
-                <div id="resultPercentText" class="text-sm font-bold mt-1 text-emerald-100">0%</div>
-              </div>
-            </div>
+      <!-- Student Info Form -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-xs">
+        <h2 class="text-base font-bold text-slate-900 mb-4 flex items-center gap-2">
+          <span>📝</span>
+          <span>ຂໍ້ມູນນັກຮຽນ</span>
+        </h2>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label for="studentName" class="block text-xs font-semibold text-slate-700 mb-1.5">
+              ຊື່ ແລະ ນາມສະກຸນ <span class="text-rose-500">*</span>
+            </label>
+            <input
+              id="studentName"
+              type="text"
+              placeholder="ຕົວຢ່າງ: ສົມຊາຍ ໃຈດີ"
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
           </div>
+          <div>
+            <label for="studentClass" class="block text-xs font-semibold text-slate-700 mb-1.5">
+              ຫ້ອງຮຽນ <span class="text-rose-500">*</span>
+            </label>
+            <input
+              id="studentClass"
+              type="text"
+              placeholder="ຕົວຢ່າງ: ມ.2/1"
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
+          <div>
+            <label for="studentCode" class="block text-xs font-semibold text-slate-700 mb-1.5">
+              ເລກທີ / ລະຫັດນັກຮຽນ
+            </label>
+            <input
+              id="studentCode"
+              type="text"
+              placeholder="ຕົວຢ່າງ: 01 ຫຼື ST001"
+              class="w-full rounded-xl border border-slate-300 px-3.5 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+            />
+          </div>
+        </div>
+      </div>
 
-          <div class="p-6 sm:p-8">
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
-              <div class="p-4 rounded-2xl bg-slate-50 border border-slate-200/80">
-                <div class="text-xs text-slate-500">ເວລາທີ່ໃຊ້ເຮັດ</div>
-                <div id="resultTimeUsed" class="text-xl font-bold text-slate-900 mt-1">00:00</div>
-              </div>
-              <div class="p-4 rounded-2xl bg-emerald-50/70 border border-emerald-200/80">
-                <div class="text-xs text-emerald-700">ຕອບຖືກ</div>
-                <div id="resultCorrectCount" class="text-xl font-bold text-emerald-700 mt-1">0 ຂໍ້</div>
-              </div>
-              <div class="p-4 rounded-2xl bg-rose-50/70 border border-rose-200/80">
-                <div class="text-xs text-rose-700">ຕອບຜິດ / ບໍ່ໄດ້ຕອບ</div>
-                <div id="resultWrongCount" class="text-xl font-bold text-rose-700 mt-1">0 ຂໍ້</div>
-              </div>
-            </div>
+      <!-- Questions Container -->
+      <form id="quizForm" onsubmit="handleManualSubmit(event)" class="space-y-4">
+        <div id="questionsList" class="space-y-4"></div>
 
-            <div class="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-slate-100">
-              <p class="text-sm text-slate-600">
-                ຄະແນນຖືກຄິດໄລ່ ແລະ ບັນທຶກເຂົ້າລະບົບແລ້ວ ທັງນັກຮຽນ ແລະ ແອັດມິນສາມາດເບິ່ງໄດ້ທັນທີ.
-              </p>
-              <div class="flex flex-wrap items-center gap-3">
-                <button
-                  type="button"
-                  onclick="resetStudentToStart()"
-                  class="px-5 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition cursor-pointer"
-                >
-                  ເຮັດວຽກບ້ານໃໝ່
-                </button>
-                <button
-                  type="button"
-                  onclick="switchMode('admin')"
-                  class="px-5 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 font-semibold text-sm transition cursor-pointer"
-                >
-                  ເບິ່ງໃນໜ້າແອັດມິນ
-                </button>
-              </div>
-            </div>
+        <!-- Submit Action Bar -->
+        <div id="submitBar" class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div class="text-sm text-slate-600">
+            ຕອບແລ້ວ: <span id="answeredCount" class="font-bold text-indigo-600">0</span> / 10 ຂໍ້
+          </div>
+          <button
+            id="submitBtn"
+            type="submit"
+            class="w-full sm:w-auto px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-sm transition cursor-pointer"
+          >
+            ສົ່ງຄຳຕອບ ແລະ ກວດຄະແນນ
+          </button>
+        </div>
+      </form>
+
+      <!-- Student Result Panel (Shown after submission) -->
+      <div id="studentResultBox" class="hidden bg-white rounded-2xl border border-indigo-200 p-5 sm:p-6 shadow-sm space-y-5">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4">
+          <div>
+            <span id="submitModeBadge" class="inline-block text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-100 text-emerald-700 mb-1.5">
+              ສົ່ງຄຳຕອບສຳເລັດ
+            </span>
+            <h3 class="text-xl font-bold text-slate-900">ຜົນການກວດຄະແນນວຽກບ້ານ</h3>
+            <p id="resultStudentMeta" class="text-xs sm:text-sm text-slate-500 mt-0.5"></p>
+          </div>
+          <div class="bg-indigo-600 text-white rounded-2xl px-5 py-3.5 text-center shadow-sm">
+            <div class="text-xs opacity-90">ຄະແນນທີ່ໄດ້</div>
+            <div id="resultScoreText" class="text-2xl sm:text-3xl font-bold">0 / 10</div>
+            <div id="resultPercentText" class="text-xs font-semibold mt-0.5">(0%)</div>
           </div>
         </div>
 
-        <div class="space-y-4">
-          <h3 class="text-lg font-bold text-slate-900">ລາຍລະອຽດຜົນການຕອບແຕ່ລະຂໍ້</h3>
-          <div id="studentReviewList" class="space-y-4"></div>
+        <div id="syncStatusText" class="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2.5">
+          ກຳລັງບັນທຶກຂໍ້ມູນ...
         </div>
+
+        <div id="resultReviewList" class="space-y-2.5"></div>
       </div>
     </section>
 
-    <!-- ==================== ADMIN DASHBOARD MODE ==================== -->
+    <!-- ==================== ADMIN VIEW ==================== -->
     <section id="adminView" class="hidden space-y-6">
 
-      <!-- Locked Admin Notice Card (shown if locked) -->
-      <div id="adminLockedNotice" class="bg-white rounded-3xl border border-slate-200 shadow-xs p-6 sm:p-8 max-w-xl mx-auto text-center space-y-4">
-        <h2 class="text-xl font-bold text-slate-900">ໜ້າແອັດມິນຖືກລັອກຢູ່</h2>
-        <p class="text-sm text-slate-600">ກະລຸນາປ້ອນລະຫັດຜ່ານແອັດມິນເພື່ອເຂົ້າເບິ່ງຂໍ້ມູນ ແລະ ຄະແນນນັກຮຽນ.</p>
-        <button
-          type="button"
-          onclick="promptAdminPinModal()"
-          class="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition cursor-pointer"
-        >
-          ປ້ອນລະຫັດຜ່ານແອັດມິນ
-        </button>
+      <!-- Admin Top Controls -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+        <div>
+          <div class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 mb-1">
+            <span>🔓</span>
+            <span>ເຂົ້າສູ່ໜ້າແອັດມິນສຳເລັດ</span>
+          </div>
+          <h2 class="text-lg sm:text-xl font-bold text-slate-900">
+            ລາຍຊື່ຜູ້ສົ່ງຄຳຕອບ ແລະ ບັນທຶກຄະແນນໃນລະບົບ
+          </h2>
+          <p class="text-xs sm:text-sm text-slate-500">
+            ຕັ້ງເວລາເຮັດວຽກບ້ານ, ດຶງຂໍ້ມູນຈາກ Google Sheet ຜ່ານ Apps Script, ກວດສອບຄະແນນ ແລະ ສົ່ງອອກ CSV
+          </p>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-2.5">
+          <button
+            type="button"
+            onclick="refreshAdminFromCloud(true)"
+            class="px-3.5 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white text-xs sm:text-sm font-semibold transition cursor-pointer"
+          >
+            🔄 ໂຫຼດຂໍ້ມູນໃໝ່
+          </button>
+          <button
+            type="button"
+            onclick="exportToCSV()"
+            class="px-3.5 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs sm:text-sm font-semibold transition cursor-pointer"
+          >
+            📥 ສົ່ງອອກ CSV
+          </button>
+          <button
+            type="button"
+            onclick="clearLocalCacheOnly()"
+            class="px-3.5 py-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs sm:text-sm font-semibold transition cursor-pointer"
+          >
+            🧹 ລ້າງແຄชເຄື່ອງນີ້
+          </button>
+          <button
+            type="button"
+            onclick="lockAdminDashboard()"
+            class="px-3.5 py-2 rounded-xl border border-slate-300 hover:bg-slate-100 text-slate-700 text-xs sm:text-sm font-semibold transition cursor-pointer"
+          >
+            🔒 ລັອກໜ້າແອັດມິນ
+          </button>
+        </div>
       </div>
 
-      <!-- Unlocked Admin Dashboard -->
-      <div id="adminDashboardContent" class="hidden space-y-6">
-
-        <!-- Top Action Toolbar -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
-          <div>
-            <h2 class="text-xl font-bold text-slate-900">ແຜງຄວບຄຸມແອັດມິນ</h2>
-            <p id="adminStorageModeText" class="text-xs text-slate-500 mt-0.5">ບັນທຶກຂໍ້ມູນອັດຕະໂນມັດໃນລະບົບ</p>
-          </div>
-          <div class="flex flex-wrap items-center gap-2">
-            <button
-              type="button"
-              onclick="loadSampleSubmissions()"
-              class="px-3.5 py-2 rounded-xl bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 text-xs sm:text-sm font-semibold transition cursor-pointer"
-            >
-              ໂຫຼດຂໍ້ມູນຕົວຢ່າງ
-            </button>
-            <button
-              type="button"
-              onclick="exportSubmissionsCSV()"
-              class="px-3.5 py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 text-xs sm:text-sm font-semibold transition cursor-pointer"
-            >
-              ສົ່ງອອກ CSV
-            </button>
-            <button
-              type="button"
-              onclick="lockAdminView()"
-              class="px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs sm:text-sm font-semibold transition cursor-pointer"
-            >
-              ລັອກໜ້າແອັດມິນ
-            </button>
-          </div>
+      <!-- Time Limit Configuration Card -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs">
+        <h3 class="text-sm font-bold text-slate-900 mb-3 flex items-center gap-2">
+          <span>⏰</span>
+          <span>ກຳນົດເວລາເຮັດວຽກບ້ານໃຫ້ນັກຮຽນ (ນາທີ)</span>
+        </h3>
+        <div class="flex flex-col sm:flex-row sm:items-center gap-3">
+          <input
+            id="adminDurationInput"
+            type="number"
+            min="1"
+            max="180"
+            value="10"
+            class="w-full sm:w-44 rounded-xl border border-slate-300 px-3.5 py-2 text-sm font-semibold focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+          <button
+            type="button"
+            onclick="saveDurationSetting()"
+            class="px-4 py-2 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs sm:text-sm font-semibold transition cursor-pointer"
+          >
+            ບັນທຶກເວລາໃໝ່
+          </button>
+          <span id="currentDurationInfo" class="text-xs text-slate-500"></span>
         </div>
-
-        <!-- Summary Stats Cards -->
-        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs">
-            <div class="text-xs font-semibold text-slate-500">ຈຳນວນຜູ້ສົ່ງທັງໝົດ</div>
-            <div id="kpiTotalSubmissions" class="text-3xl font-extrabold text-slate-900 mt-1.5">0</div>
-            <div class="text-xs text-slate-400 mt-1">ລາຍການທີ່ບັນທຶກໄວ້</div>
-          </div>
-          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs">
-            <div class="text-xs font-semibold text-slate-500">ຄະແນນສະເລ່ຍ</div>
-            <div id="kpiAvgScore" class="text-3xl font-extrabold text-indigo-600 mt-1.5">0.0</div>
-            <div id="kpiAvgPercent" class="text-xs text-indigo-500 font-medium mt-1">0%</div>
-          </div>
-          <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs">
-            <div class="text-xs font-semibold text-slate-500">ຄະແນນສູງສຸດ</div>
-            <div id="kpiMaxScore" class="text-3xl font-extrabold text-emerald-600 mt-1.5">0/10</div>
-            <div id="kpiMaxHolder" class="text-xs text-slate-500 truncate mt-1">ຍັງບໍ່ມີຜູ້ສົ່ງ</div>
-          </div>
-        </div>
-
-        <!-- Time Limit & Quiz Status Setting Card -->
-        <div class="bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-2xs">
-          <h3 class="text-base font-bold text-slate-900 mb-4">ການກຳນົດເວລາເຮັດວຽກບ້ານ ແລະ ສະຖານະ</h3>
-          <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
-            <div>
-              <label for="adminTimeLimitInput" class="block text-sm font-semibold text-slate-700 mb-1.5">
-                ກຳນົດເວລາ (ນາທີ)
-              </label>
-              <input
-                type="number"
-                id="adminTimeLimitInput"
-                min="1"
-                max="180"
-                step="1"
-                class="w-full px-4 py-2.5 rounded-xl border border-slate-300 focus:border-indigo-500 focus:ring-2 focus:ring-indigo-200 outline-none font-semibold text-slate-900"
-              />
-            </div>
-
-            <div>
-              <label class="block text-sm font-semibold text-slate-700 mb-1.5">ສະຖານະການສົ່ງ</label>
-              <button
-                type="button"
-                id="adminQuizOpenToggle"
-                onclick="toggleAdminQuizOpenDraft()"
-                class="w-full py-2.5 px-4 rounded-xl border font-semibold text-sm flex items-center justify-between transition cursor-pointer"
-              >
-                <span id="adminQuizOpenLabel">ເປີດໃຫ້ນັກຮຽນສົ່ງ</span>
-                <span id="adminQuizOpenPill" class="px-2.5 py-0.5 rounded-full text-xs font-bold">ເປີດຢູ່</span>
-              </button>
-            </div>
-
-            <div>
-              <button
-                type="button"
-                onclick="saveAdminSettings()"
-                class="w-full py-2.5 px-5 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-sm shadow-xs transition cursor-pointer"
-              >
-                ບັນທຶກການຕັ້ງຄ່າ
-              </button>
-            </div>
-          </div>
-          <p id="adminSettingsFeedback" class="text-xs font-medium text-emerald-700 mt-3"></p>
-        </div>
-
-        <!-- Submitted Users & Score Log Table -->
-        <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
-          <div class="p-5 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-            <div>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900">ລາຍຊື່ຜູ້ສົ່ງຄຳຕອບ ແລະ ບັນທຶກຄະແນນໃນລະບົບ</h3>
-              <p class="text-xs text-slate-500 mt-0.5">ສະແດງລາຍຊື່ນັກຮຽນທີ່ສົ່ງຄຳຕອບ ຄະແນນ ສະຖານະການສົ່ງ ແລະ ເວລາ</p>
-            </div>
-            <div class="flex flex-wrap items-center gap-2">
-              <input
-                type="text"
-                id="submissionSearchInput"
-                oninput="renderSubmissionsTable()"
-                placeholder="ຄົ້ນຫາຊື່ ຫຼື ຫ້ອງ..."
-                class="px-3.5 py-2 rounded-xl border border-slate-300 focus:border-indigo-500 outline-none text-sm w-full sm:w-52"
-              />
-              <button
-                type="button"
-                onclick="confirmClearAllSubmissions()"
-                class="px-3.5 py-2 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-xs sm:text-sm font-semibold transition cursor-pointer"
-              >
-                ລ້າງທັງໝົດ
-              </button>
-            </div>
-          </div>
-
-          <div class="overflow-x-auto">
-            <table class="w-full text-left border-collapse">
-              <thead>
-                <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600">
-                  <th class="py-3.5 px-4">ລຳດັບ</th>
-                  <th class="py-3.5 px-4">ຊື່ນັກຮຽນ</th>
-                  <th class="py-3.5 px-4">ຫ້ອງ</th>
-                  <th class="py-3.5 px-4">ຄະແນນ (ເຕັມ 10)</th>
-                  <th class="py-3.5 px-4">ເປີເຊັນ</th>
-                  <th class="py-3.5 px-4">ຖືກ / ຜິດ</th>
-                  <th class="py-3.5 px-4">ປະເພດການສົ່ງ</th>
-                  <th class="py-3.5 px-4">ເວລາສົ່ງ</th>
-                  <th class="py-3.5 px-4 text-right">ຈັດການ</th>
-                </tr>
-              </thead>
-              <tbody id="submissionsTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
-            </table>
-          </div>
-
-          <div id="emptySubmissionsState" class="hidden py-12 px-4 text-center">
-            <p class="font-semibold text-slate-700">ຍັງບໍ່ມີລາຍຊື່ຜູ້ສົ່ງຄຳຕອບໃນລະບົບ</p>
-            <p class="text-xs text-slate-500 mt-1">ເມື່ອນັກຮຽນສົ່ງວຽກບ້ານ ຫຼື ກົດ "ໂຫຼດຂໍ້ມູນຕົວຢ່າງ" ຂໍ້ມູນຈະປາກົດຢູ່ນີ້.</p>
-          </div>
-        </div>
-
       </div>
-    </section>
 
-  </main>
-
-  <!-- Footer -->
-  <footer class="bg-white border-t border-slate-200 py-4 mt-10">
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2 text-xs text-slate-500">
-      <span>ລະບົບວຽກບ້ານຄະນິດສາດ ຊັ້ນ ມ.2 • ປາລະໄນ 10 ຂໍ້</span>
-      <span>ຮອງຮັບການໃຊ້ງານທັງມືຖື ແລະ ຄອມພິວເຕີ</span>
-    </div>
-  </footer>
-
-  <script>
-    // ==================== SAFE MEMORY-BACKED STORAGE ====================
-    const memoryStore = Object.create(null);
-    let localStorageAvailable = true;
-
-    function safeGetItem(key) {
-      try {
-        if (window.localStorage) {
-          const val = window.localStorage.getItem(key);
-          if (val !== null) {
-            memoryStore[key] = val;
-            return val;
-          }
-        }
-      } catch (e) {
-        localStorageAvailable = false;
-      }
-      return Object.prototype.hasOwnProperty.call(memoryStore, key) ? memoryStore[key] : null;
-    }
-
-    function safeSetItem(key, value) {
-      memoryStore[key] = String(value);
-      try {
-        if (window.localStorage) {
-          window.localStorage.setItem(key, String(value));
-          localStorageAvailable = true;
-          return true;
-        }
-      } catch (e) {
-        localStorageAvailable = false;
-      }
-      return false;
-    }
-
-    function safeRemoveItem(key) {
-      delete memoryStore[key];
-      try {
-        if (window.localStorage) {
-          window.localStorage.removeItem(key);
-        }
-      } catch (e) {
-        localStorageAvailable = false;
-      }
-    }
-
-    const STORAGE_KEYS = {
-      SUBMISSIONS: 'm2_math_quiz_submissions_v2',
-      SETTINGS: 'm2_math_quiz_settings_v2',
-    };
-
-    const ADMIN_PIN = '99922246';
-
-    // 10 Grade 8 (ມ.2) Lao Math Multiple-Choice Questions
-    const QUESTIONS = [
-      {
-        id: 1,
-        prompt: 'ຄ່າຂອງ (-2)³ + (-3)² ແມ່ນເທົ່າໃດ?',
-        options: { ກ: '-1', ຂ: '1', ຄ: '-17', ງ: '17' },
-        correct: 'ຂ',
-        explanation: '(-2)³ = -8 ແລະ (-3)² = 9; ດັ່ງນັ້ນ -8 + 9 = 1.',
-      },
-      {
-        id: 2,
-        prompt: 'ຖ້າ 2x - 5 = 11, ແລ້ວ x ມີຄ່າເທົ່າໃດ?',
-        options: { ກ: '3', ຂ: '8', ຄ: '-8', ງ: '6' },
-        correct: 'ຂ',
-        explanation: '2x = 11 + 5 = 16 ດັ່ງນັ້ນ x = 16 ÷ 2 = 8.',
-      },
-      {
-        id: 3,
-        prompt: 'ຜົນຄູນຂອງ (x + 3)(x - 2) ແມ່ນຂໍ້ໃດ?',
-        options: { ກ: 'x² - 6', ຂ: 'x² + x - 6', ຄ: 'x² - x - 6', ງ: 'x² + 5x - 6' },
-        correct: 'ຂ',
-        explanation: '(x + 3)(x - 2) = x² - 2x + 3x - 6 = x² + x - 6.',
-      },
-      {
-        id: 4,
-        prompt: 'ຮູບສາມແຈໜຶ່ງມີມຸມພາຍໃນສອງມຸມເທົ່າກັບ 45° ແລະ 65°. ມຸມພາຍໃນທີສາມມີຂະໜາດເທົ່າໃດ?',
-        options: { ກ: '70°', ຂ: '80°', ຄ: '110°', ງ: '250°' },
-        correct: 'ກ',
-        explanation: 'ຜົນບວກມຸມພາຍໃນຮູບສາມແຈເທົ່າກັບ 180°; 180° - (45° + 65°) = 70°.',
-      },
-      {
-        id: 5,
-        prompt: 'ຈົ່ງແຍກຕົວປະກອບຂອງ x² - 9:',
-        options: { ກ: '(x - 9)(x + 9)', ຂ: '(x - 3)²', ຄ: '(x - 3)(x + 3)', ງ: '(x + 3)²' },
-        correct: 'ຄ',
-        explanation: 'ຜົນຕ່າງກຳລັງສອງ: a² - b² = (a - b)(a + b) ໄດ້ (x - 3)(x + 3).',
-      },
-      {
-        id: 6,
-        prompt: 'ໃນຮູບສາມແຈສາກ ABC ທີ່ມີມຸມສາກຢູ່ B, ຖ້າ AB = 6 cm ແລະ BC = 8 cm. ດ້ານກົງມຸມສາກ AC ຍາວເທົ່າໃດ?',
-        options: { ກ: '10 cm', ຂ: '14 cm', ຄ: '√14 cm', ງ: '12 cm' },
-        correct: 'ກ',
-        explanation: 'ຕາມທິດສະດີປີຕາໂກ: AC² = 6² + 8² = 36 + 64 = 100 ດັ່ງນັ້ນ AC = 10 cm.',
-      },
-      {
-        id: 7,
-        prompt: 'ຄ່າຂອງ √49 + √25 ແມ່ນເທົ່າໃດ?',
-        options: { ກ: '√74', ຂ: '12', ຄ: '34', ງ: '-2' },
-        correct: 'ຂ',
-        explanation: '√49 = 7 ແລະ √25 = 5; ດັ່ງນັ້ນ 7 + 5 = 12.',
-      },
-      {
-        id: 8,
-        prompt: 'ຖ້າ a/3 = 12/9, ແລ້ວ a ມີຄ່າເທົ່າໃດ?',
-        options: { ກ: '3', ຂ: '4', ຄ: '36', ງ: '27' },
-        correct: 'ຂ',
-        explanation: '12/9 = 4/3 ດັ່ງນັ້ນ a = 4.',
-      },
-      {
-        id: 9,
-        prompt: 'ຮູບສີ່ແຈຂ້າງຂະໜານໜຶ່ງມີພື້ນທີ່ 48 cm² ແລະ ຄວາມສູງ 6 cm. ຄວາມຍາວຂອງພື້ນແມ່ນເທົ່າໃດ?',
-        options: { ກ: '288 cm', ຂ: '42 cm', ຄ: '8 cm', ງ: '16 cm' },
-        correct: 'ຄ',
-        explanation: 'ພື້ນທີ່ = ພື້ນ × ສູງ ດັ່ງນັ້ນ ພື້ນ = 48 ÷ 6 = 8 cm.',
-      },
-      {
-        id: 10,
-        prompt: 'ຈົ່ງຫາຄ່າຂອງ x ຈາກສົມຜົນ 3(x - 1) = 2x + 4:',
-        options: { ກ: '1', ຂ: '5', ຄ: '7', ງ: '-1' },
-        correct: 'ຄ',
-        explanation: '3x - 3 = 2x + 4 ➔ 3x - 2x = 4 + 3 ➔ x = 7.',
-      },
-    ];
-
-    const DEFAULT_SETTINGS = {
-      timeLimitMinutes: 10,
-      isQuizOpen: true,
-    };
-
-    function loadSettings() {
-      try {
-        const raw = safeGetItem(STORAGE_KEYS.SETTINGS);
-        if (!raw) return { ...DEFAULT_SETTINGS };
-        const parsed = JSON.parse(raw);
-        const mins = Number(parsed?.timeLimitMinutes);
-        return {
-          timeLimitMinutes: Number.isFinite(mins) && mins >= 1 && mins <= 180 ? Math.round(mins) : 10,
-          isQuizOpen: typeof parsed?.isQuizOpen === 'boolean' ? parsed.isQuizOpen : true,
-        };
-      } catch (e) {
-        return { ...DEFAULT_SETTINGS };
-      }
-    }
-
-    function saveSettingsToStorage(nextSettings) {
-      return safeSetItem(STORAGE_KEYS.SETTINGS, JSON.stringify(nextSettings));
-    }
-
-    function loadSubmissions() {
-      try {
-        const raw = safeGetItem(STORAGE_KEYS.SUBMISSIONS);
-        if (!raw) return [];
-        const parsed = JSON.parse(raw);
-        return Array.isArray(parsed) ? parsed : [];
-      } catch (e) {
-        return [];
-      }
-    }
-
-    function saveSubmissionsToStorage(nextSubmissions) {
-      return safeSetItem(STORAGE_KEYS.SUBMISSIONS, JSON.stringify(nextSubmissions));
-    }
-
-    // App State
-    let settings = loadSettings();
-    let submissions = loadSubmissions();
-    let currentMode = 'student';
-    let adminUnlocked = false;
-    let adminQuizOpenDraft = settings.isQuizOpen;
-    let activeSession = null;
-
-    // ==================== FORMATTING & UI HELPERS ====================
-    function escapeHtml(str) {
-      return String(str ?? '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;')
-        .replace(/'/g, '&#039;');
-    }
-
-    function formatMathHtml(text) {
-      try {
-        let escaped = escapeHtml(text);
-        escaped = escaped.replace(/(^|\s)([a-zA-Z0-9]+)\/([a-zA-Z0-9]+)(?=\s|,|\.|\?|$)/g, (match, prefix, num, den) => {
-          return `${prefix}<span class="math-frac"><span class="math-frac-num">${num}</span><span class="math-frac-den">${den}</span></span>`;
-        });
-        escaped = escaped.replace(/\^([0-9n-]+)/g, '<sup>$1</sup>');
-        return escaped;
-      } catch (e) {
-        return escapeHtml(text);
-      }
-    }
-
-    function formatSecondsMMSS(totalSec) {
-      const safeSec = Math.max(0, Math.floor(Number(totalSec) || 0));
-      const mins = Math.floor(safeSec / 60);
-      const secs = safeSec % 60;
-      return `${String(mins).padStart(2, '0')}:${String(secs).padStart(2, '0')}`;
-    }
-
-    function formatLaoDateTime(isoString) {
-      try {
-        const d = new Date(isoString);
-        if (Number.isNaN(d.getTime())) return String(isoString || '');
-        const pad = (n) => String(n).padStart(2, '0');
-        return `${pad(d.getDate())}/${pad(d.getMonth() + 1)}/${d.getFullYear()} ${pad(d.getHours())}:${pad(d.getMinutes())}`;
-      } catch (e) {
-        return String(isoString || '');
-      }
-    }
-
-    function showToast(message, type = 'info') {
-      try {
-        const container = document.getElementById('toastContainer');
-        if (!container) return;
-        const toast = document.createElement('div');
-        const palette = {
-          success: 'bg-emerald-600 text-white border-emerald-700',
-          error: 'bg-rose-600 text-white border-rose-700',
-          warning: 'bg-amber-500 text-white border-amber-600',
-          info: 'bg-slate-900 text-white border-slate-800',
-        };
-        toast.className = `pointer-events-auto px-4 py-3 rounded-2xl shadow-lg border text-sm font-semibold transition-all duration-300 ${palette[type] || palette.info}`;
-        toast.textContent = String(message || '');
-        container.appendChild(toast);
-
-        setTimeout(() => {
-          toast.style.opacity = '0';
-          setTimeout(() => toast.remove(), 250);
-        }, 3000);
-      } catch (e) {
-        // Ignore toast errors in restricted WebViews
-      }
-    }
-
-    function openConfirmModal({ title, message, confirmText = 'ຢືນຢັນ', cancelText = 'ຍົກເລີກ', danger = false, onConfirm }) {
-      const modal = document.getElementById('customModal');
-      document.getElementById('customModalTitle').textContent = title;
-      document.getElementById('customModalMessage').textContent = message;
-
-      const iconEl = document.getElementById('customModalIcon');
-      iconEl.className = danger
-        ? 'w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-rose-100 text-rose-600'
-        : 'w-10 h-10 rounded-full flex items-center justify-center shrink-0 bg-indigo-100 text-indigo-600';
-
-      const actionsEl = document.getElementById('customModalActions');
-      actionsEl.innerHTML = '';
-
-      const cancelBtn = document.createElement('button');
-      cancelBtn.type = 'button';
-      cancelBtn.className = 'px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-sm transition cursor-pointer';
-      cancelBtn.textContent = cancelText;
-      cancelBtn.onclick = closeCustomModal;
-
-      const confirmBtn = document.createElement('button');
-      confirmBtn.type = 'button';
-      confirmBtn.className = danger
-        ? 'px-4 py-2 rounded-xl bg-rose-600 hover:bg-rose-700 text-white font-semibold text-sm transition cursor-pointer'
-        : 'px-4 py-2 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-semibold text-sm transition cursor-pointer';
-      confirmBtn.textContent = confirmText;
-      confirmBtn.onclick = () => {
-        closeCustomModal();
-        if (typeof onConfirm === 'function') onConfirm();
-      };
-
-      actionsEl.appendChild(cancelBtn);
-      actionsEl.appendChild(confirmBtn);
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-
-    function closeCustomModal() {
-      const modal = document.getElementById('customModal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    // ==================== MODE & PIN MODAL LOGIC ====================
-    function switchMode(mode) {
-      try {
-        if (mode === 'admin') {
-          if (!adminUnlocked) {
-            promptAdminPinModal();
-            return;
-          }
-          currentMode = 'admin';
-          applyModeVisibility();
-          renderAdminDashboard();
-        } else {
-          currentMode = 'student';
-          applyModeVisibility();
-          syncHeaderAndStudentCard();
-        }
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-      } catch (e) {
-        showToast('ເກີດຂໍ້ຜິດພາດໃນການປ່ຽນໜ້າ', 'error');
-      }
-    }
-
-    function applyModeVisibility() {
-      const studentView = document.getElementById('studentView');
-      const adminView = document.getElementById('adminView');
-      const tabStudent = document.getElementById('tabStudent');
-      const tabAdmin = document.getElementById('tabAdmin');
-
-      if (currentMode === 'admin') {
-        studentView.classList.add('hidden');
-        adminView.classList.remove('hidden');
-        tabAdmin.className = 'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer bg-indigo-600 text-white shadow-xs';
-        tabStudent.className = 'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer text-slate-600 hover:text-slate-900';
-      } else {
-        studentView.classList.remove('hidden');
-        adminView.classList.add('hidden');
-        tabStudent.className = 'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer bg-indigo-600 text-white shadow-xs';
-        tabAdmin.className = 'flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer text-slate-600 hover:text-slate-900';
-      }
-    }
-
-    function promptAdminPinModal() {
-      const modal = document.getElementById('adminPinModal');
-      const input = document.getElementById('adminModalPinInput');
-      const err = document.getElementById('adminModalPinError');
-      if (input) input.value = '';
-      if (err) err.classList.add('hidden');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-      setTimeout(() => input?.focus(), 60);
-    }
-
-    function cancelPinModal() {
-      const modal = document.getElementById('adminPinModal');
-      const input = document.getElementById('adminModalPinInput');
-      const err = document.getElementById('adminModalPinError');
-      if (input) input.value = '';
-      if (err) err.classList.add('hidden');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    function submitAdminPinModal(event) {
-      event.preventDefault();
-      const input = document.getElementById('adminModalPinInput');
-      const err = document.getElementById('adminModalPinError');
-      const entered = (input?.value || '').trim();
-
-      if (entered === ADMIN_PIN) {
-        adminUnlocked = true;
-        cancelPinModal();
-        currentMode = 'admin';
-        applyModeVisibility();
-        renderAdminDashboard();
-        showToast('ເຂົ້າສູ່ໜ້າແອັດມິນສຳເລັດ', 'success');
-      } else {
-        if (err) {
-          err.textContent = 'ລະຫັດຜ່ານບໍ່ຖືກຕ້ອງ ກະລຸນາລອງໃໝ່';
-          err.classList.remove('hidden');
-        }
-        input?.focus();
-        input?.select();
-      }
-    }
-
-    function lockAdminView() {
-      adminUnlocked = false;
-      renderAdminDashboard();
-      showToast('ລັອກໜ້າແອັດມິນແລ້ວ', 'info');
-    }
-
-    // ==================== HEADER & STUDENT START SYNC ====================
-    function syncHeaderAndStudentCard() {
-      try {
-        const badge = document.getElementById('quizStatusBadge');
-        const startTime = document.getElementById('startTimeLimitDisplay');
-        const startStatus = document.getElementById('startQuizStatusText');
-        const closedBanner = document.getElementById('quizClosedBanner');
-        const btnStart = document.getElementById('btnStartQuiz');
-        const adminPill = document.getElementById('adminCountPill');
-
-        if (adminPill) adminPill.textContent = String(submissions.length);
-        if (startTime) startTime.textContent = `${settings.timeLimitMinutes} ນາທີ`;
-
-        if (settings.isQuizOpen) {
-          if (badge) {
-            badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800';
-            badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-emerald-500"></span><span>ກຳລັງເປີດໃຫ້ສົ່ງ</span>';
-          }
-          if (startStatus) {
-            startStatus.className = 'text-lg font-bold text-emerald-600 mt-0.5';
-            startStatus.textContent = 'ເປີດໃຫ້ສົ່ງ';
-          }
-          if (closedBanner) closedBanner.classList.add('hidden');
-          if (btnStart) btnStart.disabled = false;
-        } else {
-          if (badge) {
-            badge.className = 'inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-rose-100 text-rose-800';
-            badge.innerHTML = '<span class="w-2 h-2 rounded-full bg-rose-500"></span><span>ປິດລະບົບສົ່ງຊົ່ວຄາວ</span>';
-          }
-          if (startStatus) {
-            startStatus.className = 'text-lg font-bold text-rose-600 mt-0.5';
-            startStatus.textContent = 'ປິດຊົ່ວຄາວ';
-          }
-          if (closedBanner) closedBanner.classList.remove('hidden');
-          if (btnStart) btnStart.disabled = true;
-        }
-      } catch (e) {
-        // Resilient fallback
-      }
-    }
-
-    // ==================== STUDENT QUIZ FLOW ====================
-    function startQuiz(event) {
-      event.preventDefault();
-      if (!settings.isQuizOpen) {
-        showToast('ຂະນະນີ້ລະບົບສົ່ງວຽກບ້ານຖືກປິດຊົ່ວຄາວ', 'error');
-        return;
-      }
-
-      const name = (document.getElementById('studentName')?.value || '').trim();
-      const className = (document.getElementById('studentClassId')?.value || '').trim();
-      if (!name || !className) {
-        showToast('ກະລຸນາປ້ອນຊື່ ແລະ ຫ້ອງຮຽນ', 'warning');
-        return;
-      }
-
-      const durationSeconds = Math.max(10, Number(settings.timeLimitMinutes || 10) * 60);
-      activeSession = {
-        name,
-        classId: className,
-        startedAt: Date.now(),
-        durationSeconds,
-        remainingSeconds: durationSeconds,
-        answers: {},
-        timerInterval: null,
-        isSubmitting: false,
-      };
-
-      document.getElementById('studentStartCard').classList.add('hidden');
-      document.getElementById('studentResultView').classList.add('hidden');
-      document.getElementById('studentQuizActive').classList.remove('hidden');
-      document.getElementById('activeStudentLabel').textContent = `${name} • ຫ້ອງ ${className}`;
-
-      renderQuizQuestions();
-      updateQuizProgress();
-      updateTimerUI();
-
-      if (activeSession.timerInterval) clearInterval(activeSession.timerInterval);
-      activeSession.timerInterval = setInterval(() => {
-        if (!activeSession || activeSession.isSubmitting) return;
-        activeSession.remainingSeconds -= 1;
-        updateTimerUI();
-
-        if (activeSession.remainingSeconds <= 0) {
-          activeSession.remainingSeconds = 0;
-          updateTimerUI();
-          clearInterval(activeSession.timerInterval);
-          showToast('ໝົດເວລາແລ້ວ! ລະບົບກຳລັງສົ່ງຄຳຕອບອັດຕະໂນມັດ...', 'warning');
-          finalizeQuizSubmission(true);
-        }
-      }, 1000);
-
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function updateTimerUI() {
-      if (!activeSession) return;
-      const display = document.getElementById('timerDisplay');
-      const box = document.getElementById('timerBox');
-      if (display) display.textContent = formatSecondsMMSS(activeSession.remainingSeconds);
-
-      if (!box) return;
-      if (activeSession.remainingSeconds <= 60) {
-        box.className = 'flex items-center justify-between sm:justify-end gap-3 px-4 py-2.5 rounded-xl bg-rose-100 border border-rose-300 text-rose-900 shrink-0 timer-urgent';
-      } else if (activeSession.remainingSeconds <= 180) {
-        box.className = 'flex items-center justify-between sm:justify-end gap-3 px-4 py-2.5 rounded-xl bg-amber-50 border border-amber-300 text-amber-900 shrink-0';
-      } else {
-        box.className = 'flex items-center justify-between sm:justify-end gap-3 px-4 py-2.5 rounded-xl bg-indigo-50 border border-indigo-200 text-indigo-900 shrink-0';
-      }
-    }
-
-    function renderQuizQuestions() {
-      const container = document.getElementById('questionsList');
-      if (!container || !activeSession) return;
-      container.innerHTML = '';
-
-      const keys = ['ກ', 'ຂ', 'ຄ', 'ງ'];
-      QUESTIONS.forEach((q, idx) => {
-        const card = document.createElement('div');
-        card.className = 'bg-white rounded-2xl border border-slate-200 p-5 sm:p-6 shadow-2xs';
-        const picked = activeSession.answers[q.id] || null;
-
-        const optionsHtml = keys.map((key) => {
-          const isSelected = picked === key;
-          return `
-            <label
-              for="q_${q.id}_${key}"
-              class="flex items-center gap-3.5 p-3.5 rounded-xl border transition cursor-pointer select-none ${
-                isSelected
-                  ? 'bg-indigo-50 border-indigo-500 ring-2 ring-indigo-200 text-indigo-950 font-semibold'
-                  : 'bg-slate-50/60 border-slate-200 hover:bg-slate-100 text-slate-800'
-              }"
-            >
-              <input
-                type="radio"
-                id="q_${q.id}_${key}"
-                name="question_${q.id}"
-                value="${key}"
-                ${isSelected ? 'checked' : ''}
-                onchange="selectAnswer(${q.id}, '${key}')"
-                class="sr-only"
-              />
-              <span class="w-8 h-8 rounded-lg flex items-center justify-center font-bold text-sm shrink-0 ${
-                isSelected ? 'bg-indigo-600 text-white' : 'bg-white border border-slate-300 text-slate-700'
-              }">${key}.</span>
-              <span class="text-sm sm:text-base flex-1">${formatMathHtml(q.options[key])}</span>
-            </label>
-          `;
-        }).join('');
-
-        card.innerHTML = `
-          <div class="flex items-start gap-3 mb-4">
-            <span class="px-3 py-1 rounded-xl bg-indigo-600 text-white text-xs sm:text-sm font-bold shrink-0 mt-0.5">
-              ຂໍ້ທີ ${idx + 1}
-            </span>
-            <h4 class="text-base sm:text-lg font-bold text-slate-900 leading-snug">
-              ${formatMathHtml(q.prompt)}
-            </h4>
-          </div>
-          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            ${optionsHtml}
-          </div>
-        `;
-        container.appendChild(card);
-      });
-    }
-
-    function selectAnswer(questionId, choiceKey) {
-      if (!activeSession || activeSession.isSubmitting) return;
-      activeSession.answers[questionId] = choiceKey;
-      renderQuizQuestions();
-      updateQuizProgress();
-    }
-
-    function updateQuizProgress() {
-      if (!activeSession) return;
-      const total = QUESTIONS.length;
-      const answered = QUESTIONS.filter((q) => Boolean(activeSession.answers[q.id])).length;
-      const pct = Math.round((answered / total) * 100);
-
-      document.getElementById('quizProgressBar').style.width = `${pct}%`;
-      document.getElementById('quizProgressText').textContent = `ຕອບແລ້ວ ${answered}/${total} ຂໍ້`;
-
-      const warn = document.getElementById('unansweredWarning');
-      if (answered < total) {
-        warn.className = 'text-sm text-amber-600 font-medium mt-0.5';
-        warn.textContent = `ຍັງບໍ່ໄດ້ຕອບ ${total - answered} ຂໍ້ — ທ່ານສາມາດສົ່ງໄດ້ ຫຼື ຕອບໃຫ້ຄົບກ່ອນ.`;
-      } else {
-        warn.className = 'text-sm text-emerald-700 font-medium mt-0.5';
-        warn.textContent = 'ຕອບຄົບທັງ 10 ຂໍ້ແລ້ວ! ກົດ "ສົ່ງຄຳຕອບ" ເພື່ອຄຳນວນຄະແນນ.';
-      }
-    }
-
-    function confirmAndSubmitQuiz(autoSubmitted = false) {
-      if (!activeSession || activeSession.isSubmitting) return;
-      if (autoSubmitted) {
-        finalizeQuizSubmission(true);
-        return;
-      }
-
-      const total = QUESTIONS.length;
-      const answered = QUESTIONS.filter((q) => Boolean(activeSession.answers[q.id])).length;
-      const msg = answered < total
-        ? `ທ່ານຍັງບໍ່ໄດ້ຕອບ ${total - answered} ຂໍ້. ຕ້ອງການສົ່ງຄຳຕອບເລີຍບໍ່?`
-        : 'ຢືນຢັນການສົ່ງຄຳຕອບ? ລະບົບຈະຄຳນວນຄະແນນ ແລະ ບັນທຶກຜົນທັນທີ.';
-
-      openConfirmModal({
-        title: 'ຢືນຢັນການສົ່ງຄຳຕອບ',
-        message: msg,
-        confirmText: 'ສົ່ງຄຳຕອບ',
-        cancelText: 'ກັບໄປກວດ',
-        danger: false,
-        onConfirm: () => finalizeQuizSubmission(false),
-      });
-    }
-
-    function finalizeQuizSubmission(autoSubmitted = false) {
-      if (!activeSession || activeSession.isSubmitting) return;
-      activeSession.isSubmitting = true;
-      if (activeSession.timerInterval) clearInterval(activeSession.timerInterval);
-
-      const elapsedSeconds = Math.min(
-        activeSession.durationSeconds,
-        Math.max(1, Math.round((Date.now() - activeSession.startedAt) / 1000))
-      );
-
-      let correctCount = 0;
-      const details = QUESTIONS.map((q) => {
-        const chosen = activeSession.answers[q.id] || null;
-        const isCorrect = chosen === q.correct;
-        if (isCorrect) correctCount += 1;
-        return {
-          questionId: q.id,
-          prompt: q.prompt,
-          options: q.options,
-          chosen,
-          correct: q.correct,
-          isCorrect,
-          explanation: q.explanation,
-        };
-      });
-
-      const total = QUESTIONS.length;
-      const percentage = Math.round((correctCount / total) * 100);
-
-      const record = {
-        id: 'sub_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
-        studentName: activeSession.name,
-        classId: activeSession.classId,
-        score: correctCount,
-        total,
-        percentage,
-        timeUsedSeconds: elapsedSeconds,
-        autoSubmitted: Boolean(autoSubmitted),
-        submittedAt: new Date().toISOString(),
-        details,
-      };
-
-      submissions = [record, ...submissions];
-      saveSubmissionsToStorage(submissions);
-      syncHeaderAndStudentCard();
-
-      if (adminUnlocked) {
-        renderAdminDashboard();
-      }
-
-      renderStudentResult(record);
-      showToast(`ຄຳນວນຄະແນນແລ້ວ: ${correctCount}/${total} (${percentage}%)`, 'success');
-    }
-
-    function renderStudentResult(record) {
-      document.getElementById('studentQuizActive').classList.add('hidden');
-      document.getElementById('studentStartCard').classList.add('hidden');
-      document.getElementById('studentResultView').classList.remove('hidden');
-
-      const banner = document.getElementById('resultBanner');
-      banner.className = record.percentage >= 50
-        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 p-6 sm:p-8 text-white'
-        : 'bg-gradient-to-r from-amber-600 to-rose-600 p-6 sm:p-8 text-white';
-
-      const subTypeLabel = record.autoSubmitted ? 'ໝົດເວລາ-ສົ່ງອັດຕະໂນມັດ' : 'ສົ່ງເອງ';
-      document.getElementById('resultStudentTitle').textContent = `${record.studentName} • ຫ້ອງ ${record.classId}`;
-      document.getElementById('resultStudentMeta').textContent =
-        `ສົ່ງເມື່ອ: ${formatLaoDateTime(record.submittedAt)} • ປະເພດ: ${subTypeLabel}`;
-      document.getElementById('resultScoreBig').textContent = `${record.score}/${record.total}`;
-      document.getElementById('resultPercentText').textContent = `${record.percentage}%`;
-      document.getElementById('resultTimeUsed').textContent = formatSecondsMMSS(record.timeUsedSeconds);
-      document.getElementById('resultCorrectCount').textContent = `${record.score} ຂໍ້`;
-      document.getElementById('resultWrongCount').textContent = `${record.total - record.score} ຂໍ້`;
-
-      document.getElementById('studentReviewList').innerHTML = buildReviewCardsHtml(record.details || []);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    function buildReviewCardsHtml(details) {
-      return details.map((item, idx) => {
-        const ok = Boolean(item.isCorrect);
-        const chosenText = item.chosen ? `${item.chosen}. ${item.options?.[item.chosen] || ''}` : 'ບໍ່ໄດ້ຕອບ';
-        const correctText = `${item.correct}. ${item.options?.[item.correct] || ''}`;
-
-        return `
-          <div class="rounded-2xl border ${ok ? 'border-emerald-200' : 'border-rose-200'} bg-white p-5 shadow-2xs space-y-3">
-            <div class="flex items-start justify-between gap-3">
-              <div class="flex items-start gap-2.5">
-                <span class="px-2.5 py-1 rounded-lg bg-slate-100 text-slate-800 text-xs font-bold shrink-0">ຂໍ້ ${idx + 1}</span>
-                <p class="font-bold text-slate-900 text-sm sm:text-base">${formatMathHtml(item.prompt)}</p>
-              </div>
-              <span class="px-2.5 py-1 rounded-full text-xs font-bold shrink-0 ${
-                ok ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-              }">${ok ? 'ຖືກ (+1)' : 'ຜິດ (0)'}</span>
-            </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5 text-sm">
-              <div class="p-3 rounded-xl ${ok ? 'bg-emerald-50 text-emerald-900' : 'bg-rose-50 text-rose-900'}">
-                <span class="text-xs font-semibold block opacity-75">ຄຳຕອບທີ່ເລືອກ:</span>
-                <span class="font-bold">${formatMathHtml(chosenText)}</span>
-              </div>
-              <div class="p-3 rounded-xl bg-indigo-50 text-indigo-950">
-                <span class="text-xs font-semibold block text-indigo-700">ສະເລີຍທີ່ຖືກ:</span>
-                <span class="font-bold">${formatMathHtml(correctText)}</span>
-              </div>
-            </div>
-
-            <div class="p-3 rounded-xl bg-slate-50 border border-slate-200/70 text-xs sm:text-sm text-slate-700">
-              <span class="font-bold text-slate-900">ຄຳອະທິບາຍ: </span>${formatMathHtml(item.explanation || '')}
-            </div>
-          </div>
-        `;
-      }).join('');
-    }
-
-    function resetStudentToStart() {
-      if (activeSession && activeSession.timerInterval) clearInterval(activeSession.timerInterval);
-      activeSession = null;
-      document.getElementById('studentName').value = '';
-      document.getElementById('studentClassId').value = '';
-      document.getElementById('studentResultView').classList.add('hidden');
-      document.getElementById('studentQuizActive').classList.add('hidden');
-      document.getElementById('studentStartCard').classList.remove('hidden');
-      syncHeaderAndStudentCard();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    }
-
-    // ==================== ADMIN DASHBOARD RENDERING & ACTIONS ====================
-    function renderAdminDashboard() {
-      try {
-        syncHeaderAndStudentCard();
-        const lockedNotice = document.getElementById('adminLockedNotice');
-        const dashboard = document.getElementById('adminDashboardContent');
-
-        if (!adminUnlocked) {
-          if (lockedNotice) lockedNotice.classList.remove('hidden');
-          if (dashboard) dashboard.classList.add('hidden');
-          return;
-        }
-
-        if (lockedNotice) lockedNotice.classList.add('hidden');
-        if (dashboard) dashboard.classList.remove('hidden');
-
-        const storageModeEl = document.getElementById('adminStorageModeText');
-        if (storageModeEl) {
-          storageModeEl.textContent = localStorageAvailable
-            ? 'ບັນທຶກຂໍ້ມູນອັດຕະໂນມັດໃນ Browser (localStorage)'
-            : 'ບັນທຶກຂໍ້ມູນໃນໜ່ວຍຄວາມຈຳຊົ່ວຄາວຂອງລະບົບ (Memory Fallback)';
-        }
-
-        const timeInput = document.getElementById('adminTimeLimitInput');
-        if (timeInput) timeInput.value = String(settings.timeLimitMinutes);
-
-        adminQuizOpenDraft = Boolean(settings.isQuizOpen);
-        renderAdminQuizOpenToggleDraft();
-        renderAdminKPIs();
-        renderSubmissionsTable();
-      } catch (e) {
-        const dashboard = document.getElementById('adminDashboardContent');
-        if (dashboard) dashboard.classList.remove('hidden');
-        showToast('ສະແດງໜ້າແອັດມິນແລ້ວ', 'info');
-      }
-    }
-
-    function toggleAdminQuizOpenDraft() {
-      adminQuizOpenDraft = !adminQuizOpenDraft;
-      renderAdminQuizOpenToggleDraft();
-    }
-
-    function renderAdminQuizOpenToggleDraft() {
-      const btn = document.getElementById('adminQuizOpenToggle');
-      const label = document.getElementById('adminQuizOpenLabel');
-      const pill = document.getElementById('adminQuizOpenPill');
-      if (!btn || !label || !pill) return;
-
-      if (adminQuizOpenDraft) {
-        btn.className = 'w-full py-2.5 px-4 rounded-xl border border-emerald-300 bg-emerald-50 text-emerald-950 font-semibold text-sm flex items-center justify-between transition cursor-pointer';
-        label.textContent = 'ເປີດໃຫ້ນັກຮຽນສົ່ງ';
-        pill.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-600 text-white';
-        pill.textContent = 'ເປີດຢູ່';
-      } else {
-        btn.className = 'w-full py-2.5 px-4 rounded-xl border border-rose-300 bg-rose-50 text-rose-950 font-semibold text-sm flex items-center justify-between transition cursor-pointer';
-        label.textContent = 'ປິດລະບົບສົ່ງຊົ່ວຄາວ';
-        pill.className = 'px-2.5 py-0.5 rounded-full text-xs font-bold bg-rose-600 text-white';
-        pill.textContent = 'ປິດຢູ່';
-      }
-    }
-
-    function saveAdminSettings() {
-      try {
-        const mins = Number(document.getElementById('adminTimeLimitInput')?.value);
-        if (!Number.isFinite(mins) || mins < 1 || mins > 180) {
-          showToast('ກະລຸນາປ້ອນເວລາ 1 - 180 ນາທີ', 'warning');
-          return;
-        }
-
-        settings = {
-          timeLimitMinutes: Math.round(mins),
-          isQuizOpen: Boolean(adminQuizOpenDraft),
-        };
-        saveSettingsToStorage(settings);
-        syncHeaderAndStudentCard();
-
-        const fb = document.getElementById('adminSettingsFeedback');
-        if (fb) {
-          fb.textContent = `ບັນທຶກແລ້ວ: ເວລາ ${settings.timeLimitMinutes} ນາທີ • ສະຖານະ ${settings.isQuizOpen ? 'ເປີດໃຫ້ສົ່ງ' : 'ປິດຊົ່ວຄາວ'}`;
-        }
-        showToast('ບັນທຶກການຕັ້ງຄ່າສຳເລັດແລ້ວ', 'success');
-      } catch (e) {
-        showToast('ບໍ່ສາມາດບັນທຶກການຕັ້ງຄ່າໄດ້', 'error');
-      }
-    }
-
-    function renderAdminKPIs() {
-      try {
-        const total = submissions.length;
-        const kpiTotal = document.getElementById('kpiTotalSubmissions');
-        const kpiAvg = document.getElementById('kpiAvgScore');
-        const kpiAvgPct = document.getElementById('kpiAvgPercent');
-        const kpiMax = document.getElementById('kpiMaxScore');
-        const kpiMaxHolder = document.getElementById('kpiMaxHolder');
-
-        if (kpiTotal) kpiTotal.textContent = String(total);
-
-        if (total === 0) {
-          if (kpiAvg) kpiAvg.textContent = '0.0';
-          if (kpiAvgPct) kpiAvgPct.textContent = '0%';
-          if (kpiMax) kpiMax.textContent = `0/${QUESTIONS.length}`;
-          if (kpiMaxHolder) kpiMaxHolder.textContent = 'ຍັງບໍ່ມີຜູ້ສົ່ງ';
-          return;
-        }
-
-        const maxPossible = Number(submissions[0].total || QUESTIONS.length || 10);
-        const sum = submissions.reduce((acc, s) => acc + Number(s.score || 0), 0);
-        const avg = sum / total;
-        const avgPct = Math.round((avg / maxPossible) * 100);
-
-        let top = submissions[0];
-        for (const s of submissions) {
-          if (Number(s.score || 0) > Number(top.score || 0)) top = s;
-        }
-
-        if (kpiAvg) kpiAvg.textContent = avg.toFixed(1);
-        if (kpiAvgPct) kpiAvgPct.textContent = `ຄິດເປັນ ${avgPct}% (ເຕັມ ${maxPossible})`;
-        if (kpiMax) kpiMax.textContent = `${top.score}/${top.total || maxPossible}`;
-        if (kpiMaxHolder) kpiMaxHolder.textContent = `${top.studentName} (${top.classId})`;
-      } catch (e) {
-        // Resilient fallback
-      }
-    }
-
-    function renderSubmissionsTable() {
-      try {
-        const tbody = document.getElementById('submissionsTableBody');
-        const emptyState = document.getElementById('emptySubmissionsState');
-        const query = (document.getElementById('submissionSearchInput')?.value || '').trim().toLowerCase();
-
-        if (!tbody) return;
-        tbody.innerHTML = '';
-
-        const filtered = submissions.filter((s) => {
-          if (!query) return true;
-          return (
-            String(s.studentName || '').toLowerCase().includes(query) ||
-            String(s.classId || '').toLowerCase().includes(query)
-          );
-        });
-
-        if (filtered.length === 0) {
-          if (emptyState) emptyState.classList.remove('hidden');
-          return;
-        }
-        if (emptyState) emptyState.classList.add('hidden');
-
-        filtered.forEach((sub, idx) => {
-          const totalQ = Number(sub.total || QUESTIONS.length || 10);
-          const correctN = Number(sub.score || 0);
-          const wrongN = Math.max(0, totalQ - correctN);
-          const pct = Number.isFinite(Number(sub.percentage))
-            ? Number(sub.percentage)
-            : Math.round((correctN / totalQ) * 100);
-
-          const typeBadge = sub.autoSubmitted
-            ? '<span class="inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">ໝົດເວລາ-ສົ່ງອັດຕະໂນມັດ</span>'
-            : '<span class="inline-flex px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">ສົ່ງເອງ</span>';
-
-          const tr = document.createElement('tr');
-          tr.className = 'hover:bg-slate-50 transition';
-          tr.innerHTML = `
-            <td class="py-3.5 px-4 font-semibold text-slate-500">${idx + 1}</td>
-            <td class="py-3.5 px-4 font-bold text-slate-900">${escapeHtml(sub.studentName)}</td>
-            <td class="py-3.5 px-4 text-slate-700">${escapeHtml(sub.classId)}</td>
-            <td class="py-3.5 px-4 font-extrabold text-indigo-700">${correctN}/${totalQ}</td>
-            <td class="py-3.5 px-4">
-              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${
-                pct >= 50 ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
-              }">${pct}%</span>
-            </td>
-            <td class="py-3.5 px-4 text-xs sm:text-sm font-semibold">
-              <span class="text-emerald-700">ຖືກ ${correctN}</span> / <span class="text-rose-600">ຜິດ ${wrongN}</span>
-            </td>
-            <td class="py-3.5 px-4">${typeBadge}</td>
-            <td class="py-3.5 px-4 text-xs text-slate-600">${escapeHtml(formatLaoDateTime(sub.submittedAt))}</td>
-            <td class="py-3.5 px-4 text-right">
-              <div class="inline-flex items-center gap-2">
-                <button
-                  type="button"
-                  onclick="openSubmissionDetail('${escapeHtml(sub.id)}')"
-                  class="px-3 py-1.5 rounded-lg bg-indigo-50 hover:bg-indigo-100 text-indigo-700 text-xs font-semibold transition cursor-pointer"
-                >
-                  ລາຍລະອຽດ
-                </button>
-                <button
-                  type="button"
-                  onclick="confirmDeleteSubmission('${escapeHtml(sub.id)}')"
-                  class="px-2.5 py-1.5 rounded-lg bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-semibold transition cursor-pointer"
-                >
-                  ລຶບ
-                </button>
-              </div>
-            </td>
-          `;
-          tbody.appendChild(tr);
-        });
-      } catch (e) {
-        showToast('ບໍ່ສາມາດສະແດງຕາຕະລາງໄດ້', 'error');
-      }
-    }
-
-    function openSubmissionDetail(id) {
-      const sub = submissions.find((s) => s.id === id);
-      if (!sub) return;
-      document.getElementById('detailSubheader').textContent =
-        `${sub.studentName} • ຫ້ອງ ${sub.classId} • ຄະແນນ: ${sub.score}/${sub.total} (${sub.percentage}%) • ${sub.autoSubmitted ? 'ໝົດເວລາ-ສົ່ງອັດຕະໂນມັດ' : 'ສົ່ງເອງ'}`;
-      document.getElementById('detailModalBody').innerHTML = buildReviewCardsHtml(sub.details || []);
-      const modal = document.getElementById('detailModal');
-      modal.classList.remove('hidden');
-      modal.classList.add('flex');
-    }
-
-    function closeDetailModal() {
-      const modal = document.getElementById('detailModal');
-      modal.classList.add('hidden');
-      modal.classList.remove('flex');
-    }
-
-    function confirmDeleteSubmission(id) {
-      const target = submissions.find((s) => s.id === id);
-      if (!target) return;
-      openConfirmModal({
-        title: 'ລຶບບັນທຶກຄະແນນ',
-        message: `ຕ້ອງການລຶບຂໍ້ມູນຂອງ "${target.studentName}" ແທ້ບໍ່?`,
-        confirmText: 'ລຶບ',
-        cancelText: 'ຍົກເລີກ',
-        danger: true,
-        onConfirm: () => {
-          submissions = submissions.filter((s) => s.id !== id);
-          saveSubmissionsToStorage(submissions);
-          renderAdminDashboard();
-          showToast('ລຶບຂໍ້ມູນສຳເລັດແລ້ວ', 'info');
-        },
-      });
-    }
-
-    function confirmClearAllSubmissions() {
-      if (submissions.length === 0) {
-        showToast('ບໍ່ມີຂໍ້ມູນໃຫ້ລ້າງ', 'info');
-        return;
-      }
-      openConfirmModal({
-        title: 'ລ້າງຂໍ້ມູນທັງໝົດ',
-        message: `ຕ້ອງການລຶບລາຍຊື່ ແລະ ຄະແນນທັງໝົດ ${submissions.length} ລາຍການແທ້ບໍ່?`,
-        confirmText: 'ລ້າງທັງໝົດ',
-        cancelText: 'ຍົກເລີກ',
-        danger: true,
-        onConfirm: () => {
-          submissions = [];
-          saveSubmissionsToStorage(submissions);
-          renderAdminDashboard();
-          showToast('ລ້າງຂໍ້ມູນທັງໝົດແລ້ວ', 'info');
-        },
-      });
-    }
-
-    function loadSampleSubmissions() {
-      try {
-        const samples = [
-          { name: 'ນາງ ຄຳພອນ ວົງສາ', classId: 'ມ.2/1', auto: false, elapsed: 295, picked: ['ຂ', 'ຂ', 'ຂ', 'ກ', 'ຄ', 'ກ', 'ຂ', 'ຂ', 'ຄ', 'ກ'] },
-          { name: 'ທ້າວ ບຸນມີ ແກ້ວມະນີ', classId: 'ມ.2/1', auto: false, elapsed: 410, picked: ['ຂ', 'ຂ', 'ກ', 'ກ', 'ຄ', 'ຂ', 'ຂ', 'ຂ', 'ຄ', 'ຄ'] },
-          { name: 'ນາງ ສຸດາລີ ພົມມະວົງ', classId: 'ມ.2/2', auto: false, elapsed: 240, picked: ['ຂ', 'ຂ', 'ຂ', 'ກ', 'ຄ', 'ກ', 'ຂ', 'ຂ', 'ຄ', 'ຄ'] },
-          { name: 'ທ້າວ ພູວົງ ສີຫາລາດ', classId: 'ມ.2/2', auto: true, elapsed: 600, picked: ['ກ', 'ຂ', 'ຂ', 'ຂ', 'ຄ', 'ກ', 'ຄ', 'ກ', 'ຄ', 'ຂ'] },
-        ];
-
-        const now = Date.now();
-        const created = samples.map((st, idx) => {
-          let correctN = 0;
-          const details = QUESTIONS.map((q, qIdx) => {
-            const chosen = st.picked[qIdx] || null;
-            const isCorrect = chosen === q.correct;
-            if (isCorrect) correctN += 1;
-            return {
-              questionId: q.id,
-              prompt: q.prompt,
-              options: q.options,
-              chosen,
-              correct: q.correct,
-              isCorrect,
-              explanation: q.explanation,
-            };
-          });
-          const total = QUESTIONS.length;
-          return {
-            id: 'sample_' + (now - idx * 50000) + '_' + idx,
-            studentName: st.name,
-            classId: st.classId,
-            score: correctN,
-            total,
-            percentage: Math.round((correctN / total) * 100),
-            timeUsedSeconds: st.elapsed,
-            autoSubmitted: st.auto,
-            submittedAt: new Date(now - idx * 120000).toISOString(),
-            details,
-          };
-        });
-
-        submissions = [...created, ...submissions];
-        saveSubmissionsToStorage(submissions);
-        renderAdminDashboard();
-        showToast('ໂຫຼດຂໍ້ມູນຕົວຢ່າງ 4 ຄົນສຳເລັດແລ້ວ', 'success');
-      } catch (e) {
-        showToast('ບໍ່ສາມາດໂຫຼດຂໍ້ມູນຕົວຢ່າງໄດ້', 'error');
-      }
-    }
-
-    function exportSubmissionsCSV() {
-      try {
-        if (submissions.length === 0) {
-          showToast('ບໍ່ມີຂໍ້ມູນສຳລັບສົ່ງອອກ CSV', 'warning');
-          return;
-        }
-        const headers = ['ລຳດັບ', 'ຊື່ນັກຮຽນ', 'ຫ້ອງ', 'ຄະແນນ', 'ເຕັມ', 'ເປີເຊັນ (%)', 'ຖືກ', 'ຜິດ', 'ປະເພດການສົ່ງ', 'ເວລາສົ່ງ'];
-        const rows = submissions.map((s, idx) => {
-          const totalQ = Number(s.total || QUESTIONS.length || 10);
-          const correctN = Number(s.score || 0);
-          const wrongN = Math.max(0, totalQ - correctN);
-          return [
-            idx + 1,
-            s.studentName,
-            s.classId,
-            correctN,
-            totalQ,
-            s.percentage,
-            correctN,
-            wrongN,
-            s.autoSubmitted ? 'ໝົດເວລາ-ສົ່ງອັດຕະໂນມັດ' : 'ສົ່ງເອງ',
-            formatLaoDateTime(s.submittedAt),
-          ];
-        });
-
-        const csv = '\uFEFF' + [headers, ...rows]
-          .map((r) => r.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-          .join('\n');
-
-        const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `ຄະແນນຄະນິດສາດ_ມ2_${new Date().toISOString().slice(0, 10)}.csv`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-        showToast('ສົ່ງອອກໄຟລ໌ CSV ສຳເລັດແລ້ວ', 'success');
-      } catch (e) {
-        showToast('ບໍ່ສາມາດສົ່ງອອກ CSV ໃນ WebView ນີ້ໄດ້', 'warning');
-      }
-    }
-
-    // ==================== INITIALIZATION ====================
-    window.addEventListener('DOMContentLoaded', () => {
-      syncHeaderAndStudentCard();
-      applyModeVisibility();
-    });
-
-    window.addEventListener('storage', (event) => {
-      try {
-        if (event.key === STORAGE_KEYS.SUBMISSIONS) {
-          submissions = loadSubmissions();
-          syncHeaderAndStudentCard();
-          if (adminUnlocked && currentMode === 'admin') {
-            renderAdminDashboard();
-          }
-        } else if (event.key === STORAGE_KEYS.SETTINGS) {
-          settings = loadSettings();
-          syncHeaderAndStudentCard();
-          if (adminUnlocked && currentMode === 'admin') {
-            renderAdminDashboard();
-          }
-        }
-      } catch (e) {
-        // Ignore cross-tab event issues
-      }
-    });
-  </script>
-</body>
-</html>
+      <!-- Summary Stats -->
+      <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
+          <div class="text-xs font-medium text-slate-500">ຈຳນວນຜູ້ສົ່ງທັງໝົດ</div>
+          <div id="statTotalSubmissions" class="text-2xl font-bold text-slate-900 mt-1">0 ຄົນ</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
+          <div class="text-xs font-medium text-slate-500">ຄະແນນສະເລ່ຍ</div>
+          <div id="statAvgScore" class="text-2xl font-bold text-indigo-600 mt-1">0.0 / 10</div>
+        </div>
+        <div class="bg-white rounded-2xl border border-slate-200 p-4 shadow-xs">
+          <div class="text-xs font-medium text-slate-500">ຄະແນນສູງສຸດ</div>
+          <div id="statMaxScore" class="text-2xl font-bold text-emerald-600 mt-1">0 / 10</div>
+        </div>
+      </div>
+
+      <!-- Submissions Table -->
+      <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-xs space-y-4">
+        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+          <h3 class="text-base font-bold text-slate-900">ຕາຕະລາງບັນທຶກຄະແນນນັກຮຽນ</h3>
+          <input
+            id="adminSearchInput"
+            type="text"
+            oninput="renderAdminSubmissions()"
+            placeholder="🔍 ຄົ້ນຫາຊື່, ຫ້ອງ ຫຼື ລະຫັດ..."
+            class="w-full sm:w-64 rounded-xl border border-slate-300 px-3.5 py-2 text-xs sm:text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500"
+          />
+        </div>
+
+        <div id="adminSyncBanner" class="text-xs text-slate-600 bg-slate-50 border border-slate-200 rounded-xl px-3.5 py-2">
+          ແຫຼ່ງຂໍ້ມູນ: Google Apps Script +
