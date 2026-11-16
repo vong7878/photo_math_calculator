@@ -441,8 +441,14 @@
         <!-- Top Action Toolbar -->
         <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 flex flex-wrap items-center justify-between gap-3 shadow-2xs">
           <div>
-            <h2 class="text-xl font-bold text-slate-900">ແຜງຄວບຄຸມແອັດມິນ &amp; ບັນທຶກຄະແນນ</h2>
-            <p class="text-xs sm:text-sm text-slate-500">ກຳນົດເວລາ, ເປີດ/ປິດລະບົບ, ຕິດຕາມຜູ້ສົ່ງວຽກບ້ານ ແລະ ຈັດການຄຳຖາມ</p>
+            <div class="flex flex-wrap items-center gap-2">
+              <h2 class="text-xl font-bold text-slate-900">ແຜງຄວບຄຸມແອັດມິນ &amp; ບັນທຶກຄະແນນ</h2>
+              <span class="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200">
+                <span class="w-2 h-2 rounded-full bg-emerald-500"></span>
+                <span>ບັນທຶກຄະແນນໃນລະບົບອັດຕະໂນມັດ</span>
+              </span>
+            </div>
+            <p class="text-xs sm:text-sm text-slate-500 mt-0.5">ກຳນົດເວລາ, ເປີດ/ປິດລະບົບ, ຕິດຕາມລາຍຊື່ຜູ້ສົ່ງຄຳຕອບ ແລະ ບັນທຶກຄະແນນໃນລະບົບ</p>
           </div>
           <div class="flex flex-wrap items-center gap-2.5">
             <button
@@ -557,8 +563,11 @@
         <div class="bg-white rounded-2xl border border-slate-200 shadow-2xs overflow-hidden">
           <div class="p-5 sm:p-6 border-b border-slate-200 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
             <div>
-              <h3 class="text-base sm:text-lg font-bold text-slate-900">ລາຍຊື່ນັກຮຽນທີ່ຕອບວຽກບ້ານ ແລະ ຄະແນນ</h3>
-              <p class="text-xs text-slate-500 mt-0.5">ຄລິກ "ເບິ່ງລາຍລະອຽດ" ເພື່ອກວດເບິ່ງຄຳຕອບແຕ່ລະຂໍ້ຂອງນັກຮຽນຄົນນັ້ນ</p>
+              <div class="flex flex-wrap items-center gap-2">
+                <h3 class="text-base sm:text-lg font-bold text-slate-900">ລາຍຊື່ຜູ້ສົ່ງຄຳຕອບ ແລະ ບັນທຶກຄະແນນໃນລະບົບ</h3>
+                <span id="adminTableCountBadge" class="px-2.5 py-0.5 rounded-full text-xs font-bold bg-indigo-100 text-indigo-800">0 ຄົນ</span>
+              </div>
+              <p class="text-xs text-slate-500 mt-0.5">ສະແດງຜູ້ສົ່ງຄຳຕອບທັງໝົດທີ່ບັນທຶກໄວ້ໃນລະບົບ • ຄລິກ "ເບິ່ງລາຍລະອຽດ" ເພື່ອກວດຄຳຕອບແຕ່ລະຂໍ້</p>
             </div>
             <div class="flex flex-wrap items-center gap-2.5">
               <input
@@ -585,14 +594,13 @@
             <table class="w-full text-left border-collapse">
               <thead>
                 <tr class="bg-slate-50 border-b border-slate-200 text-xs font-bold text-slate-600 uppercase tracking-wider">
-                  <th class="py-3.5 px-4">#</th>
-                  <th class="py-3.5 px-4">ຊື່ ແລະ ນາມສະກຸນ</th>
-                  <th class="py-3.5 px-4">ຫ້ອງ / ລະຫັດ</th>
-                  <th class="py-3.5 px-4">ຄະແນນ</th>
-                  <th class="py-3.5 px-4">ເປີເຊັນ</th>
-                  <th class="py-3.5 px-4">ເວລາທີ່ໃຊ້</th>
-                  <th class="py-3.5 px-4">ເວລາສົ່ງ</th>
-                  <th class="py-3.5 px-4 text-right">ຈັດການ</th>
+                  <th class="py-3.5 px-4">ລຳດັບ</th>
+                  <th class="py-3.5 px-4">ຊື່ ແລະ ນາມສະກຸນ / ຫ້ອງ / ເລກທີ</th>
+                  <th class="py-3.5 px-4">ຄະແນນທີ່ໄດ້ / ເປີເຊັນ</th>
+                  <th class="py-3.5 px-4">ຖືກ / ຜິດ</th>
+                  <th class="py-3.5 px-4">ສະຖານະການສົ່ງ</th>
+                  <th class="py-3.5 px-4">ເວລາທີ່ສົ່ງ</th>
+                  <th class="py-3.5 px-4 text-right">ປຸ່ມຈັດການ</th>
                 </tr>
               </thead>
               <tbody id="submissionsTableBody" class="divide-y divide-slate-100 text-sm"></tbody>
@@ -1486,7 +1494,12 @@
     function renderSubmissionsTable() {
       const tbody = document.getElementById('submissionsTableBody');
       const emptyState = document.getElementById('emptySubmissionsState');
+      const countBadge = document.getElementById('adminTableCountBadge');
       const searchQuery = (document.getElementById('submissionSearchInput')?.value || '').trim().toLowerCase();
+
+      if (countBadge) {
+        countBadge.textContent = `${submissions.length} ຄົນ`;
+      }
 
       const filtered = submissions.filter((s) => {
         if (!searchQuery) return true;
@@ -1508,6 +1521,10 @@
         const tr = document.createElement('tr');
         tr.className = 'hover:bg-slate-50/90 transition';
 
+        const totalQ = Number(sub.total || questions.length || 10);
+        const correctNum = Number(sub.score || 0);
+        const wrongNum = Math.max(0, totalQ - correctNum);
+
         const pctBadgeClass =
           sub.percentage >= 80
             ? 'bg-emerald-100 text-emerald-800'
@@ -1515,19 +1532,32 @@
             ? 'bg-indigo-100 text-indigo-800'
             : 'bg-rose-100 text-rose-800';
 
+        const statusBadgeHtml = sub.autoSubmitted
+          ? '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-amber-100 text-amber-800">ສົ່ງອັດຕະໂນມັດ (ໝົດເວລາ)</span>'
+          : '<span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800">ສົ່ງປົກກະຕິ</span>';
+
         tr.innerHTML = `
           <td class="py-3.5 px-4 font-semibold text-slate-500">${index + 1}</td>
-          <td class="py-3.5 px-4 font-bold text-slate-900">
-            <div>${escapeHtml(sub.studentName)}</div>
-            ${sub.autoSubmitted ? '<span class="inline-block mt-0.5 text-[11px] px-2 py-0.5 rounded bg-amber-100 text-amber-800 font-medium">ສົ່ງອັດຕະໂນມັດ</span>' : ''}
-          </td>
-          <td class="py-3.5 px-4 text-slate-700">${escapeHtml(sub.classId)}</td>
-          <td class="py-3.5 px-4 font-extrabold text-indigo-700">${sub.score}/${sub.total}</td>
           <td class="py-3.5 px-4">
-            <span class="px-2.5 py-1 rounded-full text-xs font-bold ${pctBadgeClass}">${sub.percentage}%</span>
+            <div class="font-bold text-slate-900">${escapeHtml(sub.studentName)}</div>
+            <div class="text-xs text-slate-500 mt-0.5">${escapeHtml(sub.classId)}</div>
           </td>
-          <td class="py-3.5 px-4 font-mono text-xs sm:text-sm text-slate-700">${formatSecondsMMSS(sub.timeUsedSeconds)}</td>
-          <td class="py-3.5 px-4 text-xs text-slate-500">${escapeHtml(formatLaoDateTime(sub.submittedAt))}</td>
+          <td class="py-3.5 px-4">
+            <div class="flex items-center gap-2">
+              <span class="font-extrabold text-indigo-700">${correctNum}/${totalQ}</span>
+              <span class="px-2.5 py-0.5 rounded-full text-xs font-bold ${pctBadgeClass}">${sub.percentage}%</span>
+            </div>
+          </td>
+          <td class="py-3.5 px-4 text-xs sm:text-sm font-semibold">
+            <span class="text-emerald-700">ຖືກ ${correctNum}</span>
+            <span class="text-slate-400 mx-1">/</span>
+            <span class="text-rose-600">ຜິດ ${wrongNum}</span>
+          </td>
+          <td class="py-3.5 px-4">${statusBadgeHtml}</td>
+          <td class="py-3.5 px-4 text-xs text-slate-600">
+            <div>${escapeHtml(formatLaoDateTime(sub.submittedAt))}</div>
+            <div class="font-mono text-[11px] text-slate-400 mt-0.5">ໃຊ້ເວລາ ${formatSecondsMMSS(sub.timeUsedSeconds)}</div>
+          </td>
           <td class="py-3.5 px-4 text-right">
             <div class="inline-flex items-center gap-2">
               <button
@@ -1836,6 +1866,24 @@
     // ==================== INITIALIZATION ====================
     window.addEventListener('DOMContentLoaded', () => {
       syncHeaderAndStartCard();
+    });
+
+    // Keep submissions and settings synchronized across browser tabs/windows
+    window.addEventListener('storage', (event) => {
+      if (event.key === STORAGE_KEYS.SUBMISSIONS) {
+        submissions = loadSubmissions();
+        syncHeaderAndStartCard();
+        if (adminUnlocked) {
+          renderAdminKPIs();
+          renderSubmissionsTable();
+        }
+      } else if (event.key === STORAGE_KEYS.SETTINGS) {
+        settings = loadSettings();
+        syncHeaderAndStartCard();
+      } else if (event.key === STORAGE_KEYS.QUESTIONS) {
+        questions = loadQuestions();
+        syncHeaderAndStartCard();
+      }
     });
   </script>
 </body>
