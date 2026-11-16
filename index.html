@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="lo">
 <head>
@@ -373,7 +374,7 @@
     const ADMIN_PIN = '99922246';
 
     const STORAGE_KEYS = {
-      SUBMISSIONS: 'm2_math_submissions_cache_v1',
+      SUBMISSIONS: 'm2_math_submissions_cache_v2',
       DURATION_MIN: 'm2_math_duration_minutes_v1',
       ADMIN_UNLOCKED: 'm2_math_admin_session_unlocked_v1'
     };
@@ -526,12 +527,18 @@
     let countdownTimerId = null;
     let quizSubmitted = false;
     let tabSwitchCount = 0;
+    let lastLeaveTimestamp = 0;
     let activeSessionQuestions = buildShuffledSessionQuestions();
     let submissionsList = loadCachedSubmissions();
 
     function recordTabSwitchWarning() {
       const studentViewVisible = !document.getElementById('studentView')?.classList.contains('hidden');
       if (!studentViewVisible || quizSubmitted) return;
+
+      // Debounce double-firing when switching tab/window (visibilitychange + blur often fire together)
+      const now = Date.now();
+      if (now - lastLeaveTimestamp < 350) return;
+      lastLeaveTimestamp = now;
 
       tabSwitchCount += 1;
       const alertBox = document.getElementById('antiCheatAlertBox');
@@ -689,22 +696,110 @@
       }, 1000);
     }
 
-    function handleManualSubmit(event) {
+    function normalizeStudentKey(name, studentClass = '') {
+      const cleanName = String(name || '').trim().replace(/\s+/g, ' ').toLowerCase();
+      return cleanName;
+    }
+
+    function hasAlreadySubmittedName(name) {
+      const target = normalizeStudentKey(name);
+      if (!target) return false;
+      return submissionsList.some((row) => normalizeStudentKey(row.studentName) === target);
+    }
+
+    async function checkRemoteDuplicateName(name) {
+      const target = normalizeStudentKey(name);
+      if (!target) return false;
+      try {
+        const response = await fetch(`${APPS_SCRIPT_URL}?t=${Date.now()}`, {
+          method: 'GET',
+          cache: 'no-store'
+        });
+        const payload = await response.json();
+        if (payload && payload.ok && Array.isArray(payload.records)) {
+          const matched = payload.records.some(
+            (rec) => normalizeStudentKey(rec.studentName) === target
+          );
+          if (matched && !hasAlreadySubmittedName(name)) {
+            const normalized = payload.records.map((rec) => {
+              const score = Number(rec.score ?? 0);
+              const total = Number(rec.total ?? QUESTIONS.length) || QUESTIONS.length;
+              const percent = Number(rec.percent ?? Math.round((score / total) * 100));
+              return {
+                id: String(rec.id || Math.random()),
+                studentName: String(rec.studentName || ''),
+                studentClass: String(rec.studentClass || '-'),
+                studentCode: String(rec.studentCode || '-'),
+                score,
+                total,
+                percent,
+                correctCount: score,
+                wrongCount: Math.max(0, total - score),
+                tabSwitchCount: pickTabSwitchFromRecord(rec),
+                submitType: String(rec.submitType || 'manual'),
+                submittedAt: String(rec.submittedAt || '')
+              };
+            });
+            saveCachedSubmissions(normalized);
+          }
+          return matched;
+        }
+      } catch (_) {}
+      return false;
+    }
+
+    async function handleManualSubmit(event) {
       event.preventDefault();
       if (quizSubmitted) return;
 
       const nameInput = document.getElementById('studentNameInput');
       const classInput = document.getElementById('studentClassInput');
       const validationMsg = document.getElementById('studentValidationMsg');
+      const submitBtn = document.getElementById('submitQuizBtn');
 
       const studentName = nameInput ? nameInput.value.trim() : '';
       const studentClass = classInput ? classInput.value.trim() : '';
 
       if (!studentName || !studentClass) {
-        if (validationMsg) validationMsg.classList.remove('hidden');
+        if (validationMsg) {
+          validationMsg.textContent = 'ກະລຸນາປ້ອນຊື່ ແລະ ຫ້ອງຮຽນກ່ອນສົ່ງຄຳຕອບ';
+          validationMsg.classList.remove('hidden');
+        }
         showToast('ກະລຸນາປ້ອນຊື່ ແລະ ຫ້ອງຮຽນກ່ອນສົ່ງຄຳຕອບ', 'error');
         if (!studentName && nameInput) nameInput.focus();
         else if (classInput) classInput.focus();
+        return;
+      }
+
+      if (hasAlreadySubmittedName(studentName)) {
+        if (validationMsg) {
+          validationMsg.textContent = `ຊື່ "${studentName}" ໄດ້ສົ່ງຄຳຕອບໄປແລ້ວ ບໍ່ສາມາດສົ່ງຊ້ຳໄດ້`;
+          validationMsg.classList.remove('hidden');
+        }
+        showToast(`ຊື່ "${studentName}" ສົ່ງຄຳຕອບແລ້ວ ບໍ່ສາມາດສົ່ງໄດ້ສອງຄັ້ງ`, 'error');
+        nameInput?.focus();
+        return;
+      }
+
+      if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = 'ກຳລັງກວດສອບຊື່...';
+      }
+
+      const remoteDup = await checkRemoteDuplicateName(studentName);
+
+      if (submitBtn && !quizSubmitted) {
+        submitBtn.disabled = false;
+        submitBtn.textContent = 'ສົ່ງຄຳຕອບ ແລະ ກວດຄະແນນ';
+      }
+
+      if (remoteDup) {
+        if (validationMsg) {
+          validationMsg.textContent = `ຊື່ "${studentName}" ໄດ້ສົ່ງຄຳຕອບໄປແລ້ວ ບໍ່ສາມາດສົ່ງຊ້ຳໄດ້`;
+          validationMsg.classList.remove('hidden');
+        }
+        showToast(`ຊື່ "${studentName}" ສົ່ງຄຳຕອບແລ້ວ ບໍ່ສາມາດສົ່ງໄດ້ສອງຄັ້ງ`, 'error');
+        nameInput?.focus();
         return;
       }
 
@@ -783,7 +878,7 @@
         });
         if (syncNotice) {
           syncNotice.className = 'text-xs text-emerald-800 bg-emerald-50 border border-emerald-200 rounded-xl px-4 py-2.5 font-semibold';
-          syncNotice.textContent = 'ສົ່ງຄຳຕອບ ແລະ ບັນທຶກຄະແນນໄປຍັງ Google Sheet ສຳເລັດແລ້ວ (ເບິ່ງໄດ້ທຸກເຄື່ອງໃນໜ້າແອັດມິນ)';
+          syncNotice.textContent = `ສົ່ງຄຳຕອບ ແລະ ບັນທຶກຄະແນນໄປຍັງ Google Sheet ສຳເລັດແລ້ວ (ອອກຈາກໜ້າຈໍ: ${recordedTabSwitches} ຄັ້ງ)`;
         }
         showToast(
           submitType === 'auto'
@@ -816,7 +911,7 @@
       }
 
       document.getElementById('resultStudentSummary').textContent =
-        `ຊື່: ${record.studentName} • ຫ້ອງ: ${record.studentClass} • ລະຫັດ: ${record.studentCode} • ເວລາ: ${record.submittedAt}`;
+        `ຊື່: ${record.studentName} • ຫ້ອງ: ${record.studentClass} • ລະຫັດ: ${record.studentCode} • ອອກຈາກໜ້າ: ${record.tabSwitchCount} ຄັ້ງ • ເວລາ: ${record.submittedAt}`;
       document.getElementById('resultScoreDisplay').textContent = `${record.score} / ${record.total}`;
       document.getElementById('resultPercentDisplay').textContent = `(${record.percent}%)`;
 
@@ -850,6 +945,7 @@
     function resetStudentQuiz() {
       quizSubmitted = false;
       tabSwitchCount = 0;
+      lastLeaveTimestamp = 0;
       remainingSeconds = quizDurationMinutes * 60;
       activeSessionQuestions = buildShuffledSessionQuestions();
 
@@ -979,6 +1075,22 @@
       if (statusEl) statusEl.textContent = `ເວລາປັດຈຸບັນ: ${quizDurationMinutes} ນາທີ`;
     }
 
+    function pickTabSwitchFromRecord(rec) {
+      const candidates = [
+        rec.tabSwitchCount,
+        rec.tab_switch_count,
+        rec.tabSwitches,
+        rec.leaveCount
+      ];
+      for (const val of candidates) {
+        if (val !== undefined && val !== null && String(val).trim() !== '') {
+          const num = Number(val);
+          if (Number.isFinite(num)) return num;
+        }
+      }
+      return 0;
+    }
+
     async function fetchSubmissionsFromScript(notifyUser = true) {
       const banner = document.getElementById('adminSyncBanner');
       if (banner) {
@@ -1007,9 +1119,7 @@
               percent,
               correctCount: score,
               wrongCount: Math.max(0, total - score),
-              tabSwitchCount: (rec.tabSwitchCount !== undefined && rec.tabSwitchCount !== null && rec.tabSwitchCount !== '')
-                ? (Number(rec.tabSwitchCount) || 0)
-                : 0,
+              tabSwitchCount: pickTabSwitchFromRecord(rec),
               submitType: String(rec.submitType || 'manual'),
               submittedAt: String(rec.submittedAt || '')
             };
@@ -1078,6 +1188,7 @@
           const correct = row.correctCount !== undefined ? Number(row.correctCount) : score;
           const wrong = row.wrongCount !== undefined ? Number(row.wrongCount) : Math.max(0, total - score);
           const isAuto = row.submitType === 'auto';
+          const switches = Number(row.tabSwitchCount || 0);
 
           return `
             <tr class="hover:bg-slate-50/80 transition">
@@ -1095,8 +1206,8 @@
               </td>
               <td class="py-3 px-3">
                 ${
-                  Number(row.tabSwitchCount || 0) > 0
-                    ? `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700">${Number(row.tabSwitchCount)} ຄັ້ງ</span>`
+                  switches > 0
+                    ? `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700">${switches} ຄັ້ງ</span>`
                     : `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">0 ຄັ້ງ</span>`
                 }
               </td>
@@ -1142,9 +1253,10 @@
         item.submittedAt
       ]);
 
-      const csvContent = '\uFEFF' + [headers, ...rows]
+      const csvContent = '﻿' + [headers, ...rows]
         .map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-        .join('\n');
+        .join('
+');
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
@@ -1165,6 +1277,7 @@
         updateDurationStatusText();
         renderQuestions();
         startCountdownTimer();
+        fetchSubmissionsFromScript(false);
       } catch (err) {
         const root = document.getElementById('mainWorkspace');
         if (root) {
@@ -1179,3 +1292,5 @@
   </script>
 </body>
 </html>
+
+
