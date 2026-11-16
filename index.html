@@ -12,6 +12,22 @@
     body {
       font-family: 'Noto Sans Lao', 'Inter', system-ui, sans-serif;
     }
+    .quiz-locked-content,
+    .quiz-locked-content * {
+      -webkit-user-select: none;
+      -moz-user-select: none;
+      -ms-user-select: none;
+      user-select: none;
+      -webkit-touch-callout: none;
+    }
+    .quiz-locked-content input[type="text"],
+    .quiz-locked-content input[type="number"],
+    .quiz-locked-content textarea {
+      -webkit-user-select: text;
+      -moz-user-select: text;
+      -ms-user-select: text;
+      user-select: text;
+    }
   </style>
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col overflow-x-hidden">
@@ -85,7 +101,7 @@
   <main id="mainWorkspace" class="max-w-6xl w-full mx-auto px-4 py-6 sm:py-8 flex-1">
 
     <!-- ==================== STUDENT QUIZ VIEW ==================== -->
-    <section id="studentView" class="space-y-6 select-none">
+    <section id="studentView" class="space-y-6 quiz-locked-content">
 
       <!-- Anti-Cheat Warning Banner -->
       <div id="antiCheatAlertBox" class="hidden rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs sm:text-sm text-amber-900 flex flex-wrap items-center justify-between gap-2">
@@ -1385,13 +1401,29 @@
     }
 
     // ==================== WATERMARK & COPY GUARD ====================
+    function isStudentQuizGuardActive() {
+      const studentViewVisible = !document.getElementById('studentView')?.classList.contains('hidden');
+      return Boolean(studentViewVisible && !quizSubmitted);
+    }
+
+    function clearActiveSelectionIfNeeded(e) {
+      if (!isStudentQuizGuardActive()) return;
+      const target = e && e.target;
+      if (target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') && target.type !== 'radio') {
+        return;
+      }
+      const sel = window.getSelection ? window.getSelection() : null;
+      if (sel && sel.rangeCount > 0) {
+        sel.removeAllRanges();
+      }
+    }
+
     function updateStudentWatermark() {
       const overlay = document.getElementById('watermarkOverlay');
       const grid = document.getElementById('watermarkGrid');
-      const studentViewVisible = !document.getElementById('studentView')?.classList.contains('hidden');
       if (!overlay || !grid) return;
 
-      if (!studentViewVisible || quizSubmitted) {
+      if (!isStudentQuizGuardActive()) {
         overlay.classList.add('hidden');
         return;
       }
@@ -1419,17 +1451,52 @@
     });
 
     document.addEventListener('contextmenu', (e) => {
-      const studentViewVisible = !document.getElementById('studentView')?.classList.contains('hidden');
-      if (studentViewVisible && !quizSubmitted) {
+      if (isStudentQuizGuardActive()) {
         e.preventDefault();
+        showToast('ປິດການຄລິກຂວາໃນຂະນະເຮັດວຽກບ້ານ', 'warn');
       }
     });
 
-    document.addEventListener('copy', (e) => {
-      const studentViewVisible = !document.getElementById('studentView')?.classList.contains('hidden');
-      if (studentViewVisible && !quizSubmitted) {
+    ['copy', 'cut', 'dragstart', 'selectstart'].forEach((evtName) => {
+      document.addEventListener(evtName, (e) => {
+        if (!isStudentQuizGuardActive()) return;
+        const target = e.target;
+        if (evtName === 'selectstart' && target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') && target.type !== 'radio') {
+          return;
+        }
+        if (evtName === 'copy' && target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') && target.type !== 'radio') {
+          return;
+        }
         e.preventDefault();
-        showToast('ບໍ່ອະນຸຍາດໃຫ້ກ່າຍຂໍ້ຄວາມຄຳຖາມ', 'warn');
+        clearActiveSelectionIfNeeded(e);
+        if (evtName === 'copy' || evtName === 'cut') {
+          try {
+            if (e.clipboardData) {
+              e.clipboardData.setData('text/plain', '');
+            }
+          } catch (_) {}
+          showToast('ບໍ່ອະນຸຍາດໃຫ້ຄັດລັອກ ຫຼື ຕັດຂໍ້ຄວາມຄຳຖາມ', 'warn');
+        }
+      });
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (!isStudentQuizGuardActive()) return;
+      const key = String(e.key || '').toLowerCase();
+      const hasCtrlOrMeta = e.ctrlKey || e.metaKey;
+      const target = e.target;
+      const isTextInput = target && (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA') && target.type !== 'radio';
+
+      if (hasCtrlOrMeta && (key === 'c' || key === 'x' || key === 'u' || key === 's' || key === 'p')) {
+        if (key === 'c' && isTextInput) return;
+        e.preventDefault();
+        clearActiveSelectionIfNeeded(e);
+        if (key === 'c' || key === 'x') {
+          showToast('ບໍ່ອະນຸຍາດໃຫ້ໃຊ້ Ctrl+C / Ctrl+X ກັບຂໍ້ຄວາມຄຳຖາມ', 'warn');
+        }
+      } else if (hasCtrlOrMeta && key === 'a' && !isTextInput) {
+        e.preventDefault();
+        clearActiveSelectionIfNeeded(e);
       }
     });
 
