@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ວຽກບ້ານຄະນິດສາດ ມ.2 - ລະບົບບັນທຶກຄະແນນ</title>
-  <!-- Load Tailwind CSS for responsive layout and visual styling -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Load Inter and Noto Sans Lao fonts for clear legibility -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Lao:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -18,7 +16,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col overflow-x-hidden">
 
-  <!-- Non-blocking Toast Notification Box (replaces browser alert/confirm) -->
+  <!-- Toast Notification Box -->
   <div id="toastBox" class="fixed top-4 right-4 z-50 hidden max-w-sm rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300"></div>
 
   <!-- Top Navigation Header -->
@@ -33,7 +31,7 @@
             ວຽກບ້ານຄະນິດສາດ ຊັ້ນ ມ.2
           </h1>
           <p class="text-xs text-slate-500 truncate">
-            ແບບຝຶກຫັດປາລະໄນ 10 ຂໍ້ • ຄຳນວນຄະແນນອັດຕະໂນມັດ ແລະ ບັນທຶກຜ່ານ Apps Script
+            ແບບຝຶກຫັດປາລະໄນ 10 ຂໍ້ • ສັບຂໍ້/ຕົວເລືອກ • ບັນທຶກຜ່ານ Apps Script
           </p>
         </div>
       </div>
@@ -67,14 +65,24 @@
     <!-- ==================== STUDENT QUIZ VIEW ==================== -->
     <section id="studentView" class="space-y-6">
 
+      <!-- Anti-Cheat Warning Banner -->
+      <div id="antiCheatAlertBox" class="hidden rounded-2xl border border-amber-300 bg-amber-50 px-4 py-3 text-xs sm:text-sm text-amber-900 flex flex-wrap items-center justify-between gap-2">
+        <span>
+          <strong>ແຈ້ງເຕືອນລະບົບກວດສອບ:</strong> ກວດພົບການສະຫຼັບແທັບ ຫຼື ອອກຈາກໜ້າຕ່າງເຮັດວຽກບ້ານ
+        </span>
+        <span class="font-bold px-2.5 py-0.5 rounded-full bg-amber-200/80 text-amber-950">
+          ອອກຈາກໜ້າຈໍ: <span id="tabSwitchCountDisplay">0</span> ຄັ້ງ
+        </span>
+      </div>
+
       <!-- Countdown Timer & Instructions Card -->
       <div class="bg-white rounded-2xl border border-slate-200 p-4 sm:p-5 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div class="space-y-1">
           <div class="inline-flex items-center gap-1.5 text-xs font-semibold px-2.5 py-1 rounded-full bg-indigo-50 text-indigo-700">
-            <span>ເວລາເຮັດວຽກບ້ານຕາມທີ່ແອັດມິນກຳນົດ</span>
+            <span>ສັບລຳດັບຂໍ້ ແລະ ຕົວເລືອກອັດຕະໂນມັດ • ຈັບເວລາຕາມແອັດມິນກຳນົດ</span>
           </div>
           <p class="text-sm text-slate-600 leading-relaxed">
-            ປ້ອນຊື່ ແລະ ຫ້ອງຮຽນ ແລ້ວເລືອກຄຳຕອບໃຫ້ຄົບ 10 ຂໍ້. ເມື່ອໝົດເວລາ ລະບົບຈະສົ່ງຄຳຕອບ ແລະ ຄຳນວນຄະແນນອັດຕະໂນມັດ.
+            ປ້ອນຊື່ ແລະ ຫ້ອງຮຽນ ແລ້ວເລືອກຄຳຕອບໃຫ້ຄົບ 10 ຂໍ້. ແຕ່ລະຄົນຈະໄດ້ລຳດັບຂໍ້ ແລະ ຕົວເລືອກແຕກຕ່າງກັນ ເພື່ອປ້ອງກັນການກ່າຍຄຳຕອບ.
           </p>
         </div>
 
@@ -218,7 +226,7 @@
             onclick="clearLocalSubmissionsCache()"
             class="px-3.5 py-2 rounded-xl border border-amber-300 bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs sm:text-sm font-semibold transition cursor-pointer"
           >
-            ລ້າງແຄชເຄື່ອງນີ້
+            ລ້າງແຄຊເຄື່ອງນີ້
           </button>
           <button
             type="button"
@@ -311,7 +319,7 @@
     </section>
   </main>
 
-  <!-- Admin PIN Modal (Protected by PIN: 99922246) -->
+  <!-- Admin PIN Modal (Code: 99922246) -->
   <div id="adminPinModal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-2xs flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl border border-slate-200 max-w-sm w-full p-6 shadow-xl space-y-4">
       <div>
@@ -360,7 +368,6 @@
 
   <script>
     // ==================== CONFIGURATION ====================
-    // Connected Google Apps Script Web App endpoint for reading/writing scores
     const APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw-KOqGd0RhzF-MHOkqxuxOdisTSJTD-0zMEhwTonaYyoKgE8mzZZztaH2nB77rZicpkA/exec';
     const ADMIN_PIN = '99922246';
 
@@ -370,7 +377,6 @@
       ADMIN_UNLOCKED: 'm2_math_admin_session_unlocked_v1'
     };
 
-    // Grade 8 (ມ.2) Math Multiple-Choice Questions (10 items)
     const QUESTIONS = [
       {
         id: 1,
@@ -444,47 +450,72 @@
       }
     ];
 
+    const CHOICE_KEYS = ['ກ', 'ຂ', 'ຄ', 'ງ'];
+
     // ==================== SAFE STORAGE WITH MEMORY FALLBACK ====================
     const fallbackMemory = new Map();
 
-    // Reads from localStorage when allowed, otherwise falls back to in-memory Map
     function safeGetStorage(key) {
       try {
         if (window.localStorage) {
           const val = window.localStorage.getItem(key);
           if (val !== null) return val;
         }
-      } catch (_) {
-        // Fallback to memory when localStorage is blocked
-      }
+      } catch (_) {}
       return fallbackMemory.has(key) ? fallbackMemory.get(key) : null;
     }
 
-    // Writes to both memory fallback and localStorage when available
     function safeSetStorage(key, value) {
       fallbackMemory.set(key, String(value));
       try {
         if (window.localStorage) {
           window.localStorage.setItem(key, String(value));
         }
-      } catch (_) {
-        // Keep in fallbackMemory
-      }
+      } catch (_) {}
     }
 
-    // Removes key from both memory fallback and localStorage
     function safeRemoveStorage(key) {
       fallbackMemory.delete(key);
       try {
         if (window.localStorage) {
           window.localStorage.removeItem(key);
         }
-      } catch (_) {
-        // Ignore storage access errors
-      }
+      } catch (_) {}
     }
 
-    // ==================== APPLICATION STATE ====================
+    // ==================== ANTI-CHEAT SHUFFLE & TAB MONITOR ====================
+    function shuffleArray(arr) {
+      const copy = [...arr];
+      for (let i = copy.length - 1; i > 0; i -= 1) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [copy[i], copy[j]] = [copy[j], copy[i]];
+      }
+      return copy;
+    }
+
+    function buildShuffledSessionQuestions() {
+      const shuffledQuestions = shuffleArray(QUESTIONS);
+      return shuffledQuestions.map((q) => {
+        const originalEntries = Object.entries(q.options);
+        const shuffledValues = shuffleArray(originalEntries.map(([, text]) => text));
+        const optionMap = {};
+        const displayToOriginalKey = {};
+
+        CHOICE_KEYS.forEach((displayKey, idx) => {
+          const optionText = shuffledValues[idx];
+          optionMap[displayKey] = optionText;
+          const matchedEntry = originalEntries.find(([, txt]) => txt === optionText);
+          displayToOriginalKey[displayKey] = matchedEntry ? matchedEntry[0] : displayKey;
+        });
+
+        return {
+          ...q,
+          displayOptions: optionMap,
+          displayToOriginalKey
+        };
+      });
+    }
+
     let quizDurationMinutes = Number(safeGetStorage(STORAGE_KEYS.DURATION_MIN) || 10);
     if (!Number.isFinite(quizDurationMinutes) || quizDurationMinutes < 1) {
       quizDurationMinutes = 10;
@@ -493,7 +524,29 @@
     let remainingSeconds = quizDurationMinutes * 60;
     let countdownTimerId = null;
     let quizSubmitted = false;
+    let tabSwitchCount = 0;
+    let activeSessionQuestions = buildShuffledSessionQuestions();
     let submissionsList = loadCachedSubmissions();
+
+    function recordTabSwitchWarning() {
+      const studentViewVisible = !document.getElementById('studentView')?.classList.contains('hidden');
+      if (!studentViewVisible || quizSubmitted) return;
+
+      tabSwitchCount += 1;
+      const alertBox = document.getElementById('antiCheatAlertBox');
+      const countEl = document.getElementById('tabSwitchCountDisplay');
+      if (countEl) countEl.textContent = String(tabSwitchCount);
+      if (alertBox) alertBox.classList.remove('hidden');
+      showToast(`ແຈ້ງເຕືອນ: ກວດພົບການອອກຈາກໜ້າຈໍ (${tabSwitchCount} ຄັ້ງ)`, 'warn');
+    }
+
+    document.addEventListener('visibilitychange', () => {
+      if (document.hidden) recordTabSwitchWarning();
+    });
+
+    window.addEventListener('blur', () => {
+      recordTabSwitchWarning();
+    });
 
     function loadCachedSubmissions() {
       try {
@@ -544,12 +597,13 @@
       if (!container) return;
       container.innerHTML = '';
 
-      QUESTIONS.forEach((q, idx) => {
+      activeSessionQuestions.forEach((q, idx) => {
         const card = document.createElement('div');
         card.className = 'bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs';
 
-        const optionsMarkup = Object.entries(q.options)
-          .map(([choiceKey, choiceText]) => `
+        const optionsMarkup = CHOICE_KEYS.map((choiceKey) => {
+          const choiceText = q.displayOptions[choiceKey];
+          return `
             <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 cursor-pointer transition">
               <input
                 type="radio"
@@ -561,8 +615,8 @@
               <span class="font-bold text-indigo-700">${choiceKey}.</span>
               <span class="text-sm text-slate-800">${escapeHtml(choiceText)}</span>
             </label>
-          `)
-          .join('');
+          `;
+        }).join('');
 
         card.innerHTML = `
           <div class="font-bold text-slate-900 text-sm sm:text-base mb-3.5">
@@ -580,7 +634,7 @@
 
     function collectStudentAnswers() {
       const answers = {};
-      QUESTIONS.forEach((q) => {
+      activeSessionQuestions.forEach((q) => {
         const checked = document.querySelector(`input[name="question_${q.id}"]:checked`);
         answers[q.id] = checked ? checked.value : null;
       });
@@ -657,7 +711,6 @@
       submitStudentQuiz('manual');
     }
 
-    // Grades the 10 answers, caches locally, and POSTs to Google Apps Script
     async function submitStudentQuiz(submitType) {
       if (quizSubmitted) return;
       quizSubmitted = true;
@@ -669,15 +722,19 @@
       const answers = collectStudentAnswers();
 
       let score = 0;
-      const reviewItems = QUESTIONS.map((q) => {
-        const chosen = answers[q.id];
-        const isCorrect = chosen === q.answer;
+      const reviewItems = activeSessionQuestions.map((q) => {
+        const chosenDisplayKey = answers[q.id];
+        const chosenText = chosenDisplayKey ? q.displayOptions[chosenDisplayKey] : 'ບໍ່ໄດ້ຕອບ';
+        const correctText = q.options[q.answer];
+        const isCorrect = chosenText === correctText;
         if (isCorrect) score += 1;
+
         return {
           id: q.id,
           question: q.question,
-          chosen,
-          correctAnswer: q.answer,
+          chosenDisplayKey,
+          chosenText,
+          correctText,
           isCorrect,
           explanation: q.explanation
         };
@@ -699,14 +756,12 @@
         submittedAt: new Date().toLocaleString('lo-LA')
       };
 
-      // Lock quiz inputs and reveal retake button
       document.querySelectorAll('#quizForm input').forEach((el) => {
         el.disabled = true;
       });
       document.getElementById('submitActionBar')?.classList.add('hidden');
       document.getElementById('retakeBtn')?.classList.remove('hidden');
 
-      // Save to local/memory fallback cache immediately
       saveCachedSubmissions([record, ...submissionsList]);
       renderStudentResult(record, reviewItems);
 
@@ -765,11 +820,11 @@
       const container = document.getElementById('reviewItemsContainer');
       if (container) {
         container.innerHTML = reviewItems
-          .map((item) => `
+          .map((item, idx) => `
             <div class="p-3.5 rounded-xl border ${item.isCorrect ? 'border-emerald-200 bg-emerald-50/40' : 'border-rose-200 bg-rose-50/40'}">
               <div class="flex items-start justify-between gap-2">
                 <div class="text-xs sm:text-sm font-semibold text-slate-900">
-                  ຂໍ້ທີ ${item.id}: ${escapeHtml(item.question)}
+                  ຂໍ້ທີ່ ${idx + 1} (ID ${item.id}): ${escapeHtml(item.question)}
                 </div>
                 <span class="shrink-0 text-xs font-bold px-2 py-0.5 rounded-full ${
                   item.isCorrect ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
@@ -778,7 +833,7 @@
                 </span>
               </div>
               <div class="text-xs text-slate-600 mt-1.5">
-                ຄຳຕອບທີ່ເລືອກ: <strong>${escapeHtml(item.chosen || 'ບໍ່ໄດ້ຕອບ')}</strong> • ຄຳຕອບທີ່ຖືກ: <strong class="text-emerald-700">${escapeHtml(item.correctAnswer)}</strong>
+                ຄຳຕອບທີ່ເລືອກ: <strong>${escapeHtml(item.chosenDisplayKey ? `${item.chosenDisplayKey}. ${item.chosenText}` : 'ບໍ່ໄດ້ຕອບ')}</strong> • ຄຳຕອບທີ່ຖືກ: <strong class="text-emerald-700">${escapeHtml(item.correctText)}</strong>
               </div>
               <div class="text-xs text-slate-500 mt-1">${escapeHtml(item.explanation)}</div>
             </div>
@@ -791,7 +846,14 @@
 
     function resetStudentQuiz() {
       quizSubmitted = false;
+      tabSwitchCount = 0;
       remainingSeconds = quizDurationMinutes * 60;
+      activeSessionQuestions = buildShuffledSessionQuestions();
+
+      document.getElementById('antiCheatAlertBox')?.classList.add('hidden');
+      const countEl = document.getElementById('tabSwitchCountDisplay');
+      if (countEl) countEl.textContent = '0';
+
       document.getElementById('studentResultCard')?.classList.add('hidden');
       document.getElementById('submitActionBar')?.classList.remove('hidden');
       document.getElementById('retakeBtn')?.classList.add('hidden');
@@ -914,7 +976,6 @@
       if (statusEl) statusEl.textContent = `ເວລາປັດຈຸບັນ: ${quizDurationMinutes} ນາທີ`;
     }
 
-    // Fetches live submissions from Apps Script GET endpoint and updates local cache
     async function fetchSubmissionsFromScript(notifyUser = true) {
       const banner = document.getElementById('adminSyncBanner');
       if (banner) {
@@ -1045,7 +1106,7 @@
       submissionsList = [];
       updateAdminCountBadge();
       renderAdminTable();
-      showToast('ລ້າງແຄชໃນເຄື່ອງນີ້ແລ້ວ (ຂໍ້ມູນໃນ Google Sheet ຍັງຢູ່ຄົບ)');
+      showToast('ລ້າງແຄຊໃນເຄື່ອງນີ້ແລ້ວ (ຂໍ້ມູນໃນ Google Sheet ຍັງຢູ່ຄົບ)');
     }
 
     function exportSubmissionsCSV() {
@@ -1067,9 +1128,10 @@
         item.submittedAt
       ]);
 
-      const csvContent = '\uFEFF' + [headers, ...rows]
+      const csvContent = '﻿' + [headers, ...rows]
         .map((row) => row.map((cell) => `"${String(cell ?? '').replace(/"/g, '""')}"`).join(','))
-        .join('\n');
+        .join('
+');
 
       const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
       const url = URL.createObjectURL(blob);
