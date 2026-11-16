@@ -4,9 +4,7 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>ວຽກບ້ານຄະນິດສາດ ມ.2 - ລະບົບບັນທຶກຄະແນນ</title>
-  <!-- Load Tailwind CSS for responsive layout and visual styling -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- Load Inter and Noto Sans Lao fonts for clear legibility -->
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Noto+Sans+Lao:wght@400;500;600;700&display=swap" rel="stylesheet" />
@@ -18,7 +16,7 @@
 </head>
 <body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col overflow-x-hidden">
 
-  <!-- Toast Notification Box (replaces alert/confirm) -->
+  <!-- Toast Notification Box -->
   <div id="toastBox" class="fixed top-4 right-4 z-50 hidden max-w-sm rounded-xl px-4 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300"></div>
 
   <!-- Top Navigation Header -->
@@ -33,7 +31,7 @@
             ວຽກບ້ານຄະນິດສາດ ຊັ້ນ ມ.2
           </h1>
           <p class="text-xs text-slate-500 truncate">
-            ແບບຝຶກຫັດປາລະໄນ 10 ຂໍ້ • ສັບຂໍ້ ແລະ ຕົວເລືອກ • ບັນທຶກຜ່ານ Apps Script
+            ແບບຝຶກຫັດປາລະໄນ 10 ຂໍ້ • ສັບຂໍ້/ຕົວເລືອກ • ບັນທຶກຜ່ານ Apps Script
           </p>
         </div>
       </div>
@@ -306,6 +304,7 @@
                 <th class="py-3 px-3">ລະຫັດ</th>
                 <th class="py-3 px-3">ຄະແນນ</th>
                 <th class="py-3 px-3">ຖືກ / ຜິດ</th>
+                <th class="py-3 px-3">ອອກຈາກໜ້າ</th>
                 <th class="py-3 px-3">ການສົ່ງ</th>
                 <th class="py-3 px-3 rounded-tr-xl">ເວລາສົ່ງ</th>
               </tr>
@@ -321,7 +320,7 @@
     </section>
   </main>
 
-  <!-- Admin PIN Modal (Protected by PIN: 99922246) -->
+  <!-- Admin PIN Modal (Code: 99922246) -->
   <div id="adminPinModal" class="fixed inset-0 z-50 hidden bg-slate-900/50 backdrop-blur-2xs flex items-center justify-center p-4">
     <div class="bg-white rounded-2xl border border-slate-200 max-w-sm w-full p-6 shadow-xl space-y-4">
       <div>
@@ -457,41 +456,32 @@
     // ==================== SAFE STORAGE WITH MEMORY FALLBACK ====================
     const fallbackMemory = new Map();
 
-    // Reads from localStorage when allowed, otherwise falls back to in-memory Map
     function safeGetStorage(key) {
       try {
         if (window.localStorage) {
           const val = window.localStorage.getItem(key);
           if (val !== null) return val;
         }
-      } catch (_) {
-        // Fallback when localStorage access is blocked
-      }
+      } catch (_) {}
       return fallbackMemory.has(key) ? fallbackMemory.get(key) : null;
     }
 
-    // Persists key-value in memory and attempts localStorage when permitted
     function safeSetStorage(key, value) {
       fallbackMemory.set(key, String(value));
       try {
         if (window.localStorage) {
           window.localStorage.setItem(key, String(value));
         }
-      } catch (_) {
-        // Retain in fallbackMemory
-      }
+      } catch (_) {}
     }
 
-    // Removes key from memory and localStorage when permitted
     function safeRemoveStorage(key) {
       fallbackMemory.delete(key);
       try {
         if (window.localStorage) {
           window.localStorage.removeItem(key);
         }
-      } catch (_) {
-        // Ignore storage restriction
-      }
+      } catch (_) {}
     }
 
     // ==================== ANTI-CHEAT SHUFFLE & TAB MONITOR ====================
@@ -504,7 +494,6 @@
       return copy;
     }
 
-    // Builds a shuffled session of all 10 questions and shuffled option labels
     function buildShuffledSessionQuestions() {
       const shuffledQuestions = shuffleArray(QUESTIONS);
       return shuffledQuestions.map((q) => {
@@ -604,7 +593,6 @@
     }
 
     // ==================== STUDENT QUIZ RENDERING & TIMER ====================
-    // Renders all 10 shuffled questions and shuffled option labels into #questionsContainer
     function renderQuestions() {
       const container = document.getElementById('questionsContainer');
       if (!container) return;
@@ -614,41 +602,31 @@
         const card = document.createElement('div');
         card.className = 'bg-white rounded-2xl border border-slate-200 p-5 shadow-2xs';
 
-        const questionTitle = document.createElement('div');
-        questionTitle.className = 'font-bold text-slate-900 text-sm sm:text-base mb-3.5';
-        questionTitle.textContent = `${idx + 1}. ${q.question}`;
-        card.appendChild(questionTitle);
-
-        const optionsGrid = document.createElement('div');
-        optionsGrid.className = 'grid grid-cols-1 sm:grid-cols-2 gap-2.5';
-
-        CHOICE_KEYS.forEach((choiceKey) => {
+        const optionsMarkup = CHOICE_KEYS.map((choiceKey) => {
           const choiceText = q.displayOptions[choiceKey];
-          const label = document.createElement('label');
-          label.className = 'flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 cursor-pointer transition';
+          return `
+            <label class="flex items-center gap-3 p-3 rounded-xl border border-slate-200 hover:border-indigo-400 hover:bg-indigo-50/40 cursor-pointer transition">
+              <input
+                type="radio"
+                name="question_${q.id}"
+                value="${choiceKey}"
+                onchange="updateAnsweredCounter()"
+                class="w-4 h-4 text-indigo-600 focus:ring-indigo-500"
+              />
+              <span class="font-bold text-indigo-700">${choiceKey}.</span>
+              <span class="text-sm text-slate-800">${escapeHtml(choiceText)}</span>
+            </label>
+          `;
+        }).join('');
 
-          const radio = document.createElement('input');
-          radio.type = 'radio';
-          radio.name = `question_${q.id}`;
-          radio.value = choiceKey;
-          radio.className = 'w-4 h-4 text-indigo-600 focus:ring-indigo-500';
-          radio.addEventListener('change', updateAnsweredCounter);
-
-          const keySpan = document.createElement('span');
-          keySpan.className = 'font-bold text-indigo-700';
-          keySpan.textContent = `${choiceKey}.`;
-
-          const textSpan = document.createElement('span');
-          textSpan.className = 'text-sm text-slate-800';
-          textSpan.textContent = choiceText;
-
-          label.appendChild(radio);
-          label.appendChild(keySpan);
-          label.appendChild(textSpan);
-          optionsGrid.appendChild(label);
-        });
-
-        card.appendChild(optionsGrid);
+        card.innerHTML = `
+          <div class="font-bold text-slate-900 text-sm sm:text-base mb-3.5">
+            ${idx + 1}. ${escapeHtml(q.question)}
+          </div>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            ${optionsMarkup}
+          </div>
+        `;
         container.appendChild(card);
       });
 
@@ -734,7 +712,6 @@
       submitStudentQuiz('manual');
     }
 
-    // Grades by comparing selected option text against each question's true answer text
     async function submitStudentQuiz(submitType) {
       if (quizSubmitted) return;
       quizSubmitted = true;
@@ -766,6 +743,7 @@
 
       const total = QUESTIONS.length;
       const percent = Math.round((score / total) * 100);
+      const recordedTabSwitches = Number(tabSwitchCount || 0);
       const record = {
         id: String(Date.now()),
         studentName,
@@ -776,6 +754,7 @@
         percent,
         correctCount: score,
         wrongCount: total - score,
+        tabSwitchCount: recordedTabSwitches,
         submitType,
         submittedAt: new Date().toLocaleString('lo-LA')
       };
@@ -1028,6 +1007,9 @@
               percent,
               correctCount: score,
               wrongCount: Math.max(0, total - score),
+              tabSwitchCount: (rec.tabSwitchCount !== undefined && rec.tabSwitchCount !== null && rec.tabSwitchCount !== '')
+                ? (Number(rec.tabSwitchCount) || 0)
+                : 0,
               submitType: String(rec.submitType || 'manual'),
               submittedAt: String(rec.submittedAt || '')
             };
@@ -1044,12 +1026,12 @@
 
         renderAdminTable();
         if (banner) {
-          banner.textContent = 'ສະແດງຂໍ້ມູນຈາກແຄຊໃນເຄື່ອງ (ບໍ່ພົບຂໍ້ມູນໃໝ່ຈາກ Apps Script)';
+          banner.textContent = 'ສະແດງຂໍ້ມູນຈາກແຄชໃນເຄື່ອງ (ບໍ່ພົບຂໍ້ມູນໃໝ່ຈາກ Apps Script)';
         }
       } catch (_) {
         renderAdminTable();
         if (banner) {
-          banner.textContent = 'ບໍ່ສາມາດເຊື່ອມຕໍ່ Apps Script ໄດ້ຊົ່ວຄາວ • ກຳລັງສະແດງຂໍ້ມູນຈາກແຄຊໃນເຄື່ອງ';
+          banner.textContent = 'ບໍ່ສາມາດເຊື່ອມຕໍ່ Apps Script ໄດ້ຊົ່ວຄາວ • ກຳລັງສະແດງຂໍ້ມູນຈາກແຄชໃນເຄື່ອງ';
         }
         if (notifyUser) showToast('ດຶງຂໍ້ມູນອອນໄລນ໌ບໍ່ສຳເລັດ ສະແດງຂໍ້ມູນໃນເຄື່ອງແທນ', 'warn');
       }
@@ -1112,6 +1094,13 @@
                 <span class="text-emerald-700">ຖືກ ${correct}</span> / <span class="text-rose-600">ຜິດ ${wrong}</span>
               </td>
               <td class="py-3 px-3">
+                ${
+                  Number(row.tabSwitchCount || 0) > 0
+                    ? `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-bold bg-rose-100 text-rose-700">${Number(row.tabSwitchCount)} ຄັ້ງ</span>`
+                    : `<span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-500">0 ຄັ້ງ</span>`
+                }
+              </td>
+              <td class="py-3 px-3">
                 <span class="inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${
                   isAuto ? 'bg-amber-100 text-amber-800' : 'bg-emerald-100 text-emerald-700'
                 }">
@@ -1139,7 +1128,7 @@
         return;
       }
 
-      const headers = ['ລຳດັບ', 'ຊື່ນັກຮຽນ', 'ຫ້ອງ', 'ລະຫັດ', 'ຄະແນນ', 'ຄະແນນເຕັມ', 'ເປີເຊັນ', 'ປະເພດການສົ່ງ', 'ເວລາສົ່ງ'];
+      const headers = ['ລຳດັບ', 'ຊື່ນັກຮຽນ', 'ຫ້ອງ', 'ລະຫັດ', 'ຄະແນນ', 'ຄະແນນເຕັມ', 'ເປີເຊັນ', 'ອອກຈາກໜ້າ (ຄັ້ງ)', 'ປະເພດການສົ່ງ', 'ເວລາສົ່ງ'];
       const rows = submissionsList.map((item, idx) => [
         idx + 1,
         item.studentName,
@@ -1148,6 +1137,7 @@
         item.score,
         item.total,
         `${item.percent}%`,
+        Number(item.tabSwitchCount || 0),
         item.submitType === 'auto' ? 'ອັດຕະໂນມັດ' : 'ກົດສົ່ງເອງ',
         item.submittedAt
       ]);
